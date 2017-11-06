@@ -149,12 +149,14 @@ public class ReleaseService {
   public Release publish(Namespace namespace, String releaseName, String releaseComment,
                          String operator, boolean isEmergencyPublish) {
 
+    //youzhihao:查看下namepspace锁住了没
     checkLock(namespace, isEmergencyPublish, operator);
 
     Map<String, String> operateNamespaceItems = getNamespaceItems(namespace);
 
     Namespace parentNamespace = namespaceService.findParentNamespace(namespace);
 
+    //youzhihao:todo，这边是灰度发布吗？
     //branch release
     if (parentNamespace != null) {
       return publishBranchNamespace(parentNamespace, namespace, operateNamespaceItems,

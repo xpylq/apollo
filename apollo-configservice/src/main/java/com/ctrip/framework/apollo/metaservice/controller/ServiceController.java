@@ -21,6 +21,7 @@ public class ServiceController {
   private DiscoveryService discoveryService;
 
 
+  //youzhihao:这个接口好像没有用到
   @RequestMapping("/meta")
   public List<ServiceDTO> getMetaService() {
     List<InstanceInfo> instances = discoveryService.getMetaServiceInstances();
@@ -39,6 +40,7 @@ public class ServiceController {
     return result;
   }
 
+  //youzhihao:获取config所有服务的ip
   @RequestMapping("/config")
   public List<ServiceDTO> getConfigService(
       @RequestParam(value = "appId", defaultValue = "") String appId,
@@ -59,6 +61,7 @@ public class ServiceController {
     return result;
   }
 
+  //youzhihao:获取admin所有服务的ip
   @RequestMapping("/admin")
   public List<ServiceDTO> getAdminService() {
     List<InstanceInfo> instances = discoveryService.getAdminServiceInstances();

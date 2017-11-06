@@ -20,7 +20,7 @@ public class AdminServiceHealthIndicator implements HealthIndicator {
     if (errorCode != 0) {
       return Health.down().withDetail("Error Code", errorCode).build();
     }
-    return Health.up().build();
+    return Health.up().withDetail("admin-service","admin-service1").build();
   }
 
   private int check() {

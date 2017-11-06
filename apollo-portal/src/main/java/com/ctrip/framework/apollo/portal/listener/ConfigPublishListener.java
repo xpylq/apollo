@@ -24,6 +24,8 @@ import java.util.concurrent.Executors;
 
 import javax.annotation.PostConstruct;
 
+
+//youzhihao:主要是用来处理发布配置后，执行对应的异步邮件通知和mq通知操作
 @Component
 public class ConfigPublishListener {
 

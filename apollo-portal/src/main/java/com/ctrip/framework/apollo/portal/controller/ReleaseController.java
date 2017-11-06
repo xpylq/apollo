@@ -51,6 +51,7 @@ public class ReleaseController {
       throw new BadRequestException(String.format("Env: %s is not supported emergency publish now", env));
     }
 
+    //调adminService接口，进行配置的发布操作
     ReleaseDTO createdRelease = releaseService.publish(model);
 
     ConfigPublishEvent event = ConfigPublishEvent.instance();
@@ -61,6 +62,7 @@ public class ReleaseController {
         .setNormalPublishEvent(true)
         .setEnv(Env.valueOf(env));
 
+    //youzhihao:发布，配置发布事件，处理对应的mq订阅和邮件订阅等操作
     publisher.publishEvent(event);
 
     return createdRelease;

@@ -84,7 +84,9 @@ CREATE TABLE `Audit` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='日志审计表';
 
 
-
+#youzhihao:
+#AppId,Name,:唯一确定一个Cluster
+DROP TABLE IF EXISTS `Namespace`;
 # Dump of table cluster
 # ------------------------------------------------------------
 
@@ -225,12 +227,12 @@ CREATE TABLE `Item` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配置项目';
 
 
-
+#youzhihao:
+#AppId,ClusterName,NamespaceName:唯一确定一个Namespace
+#AppId,ClusterName:唯一确定一个cluster
+DROP TABLE IF EXISTS `Namespace`;
 # Dump of table namespace
 # ------------------------------------------------------------
-
-DROP TABLE IF EXISTS `Namespace`;
-
 CREATE TABLE `Namespace` (
   `Id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `AppId` varchar(500) NOT NULL DEFAULT 'default' COMMENT 'AppID',
