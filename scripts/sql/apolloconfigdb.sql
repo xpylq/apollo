@@ -12,6 +12,8 @@ CREATE DATABASE IF NOT EXISTS ApolloConfigDB DEFAULT CHARACTER SET = utf8mb4;
 
 Use ApolloConfigDB;
 
+#youzhihao:
+# AppId唯一确定一个App
 # Dump of table app
 # ------------------------------------------------------------
 
@@ -270,7 +272,8 @@ CREATE TABLE `NamespaceLock` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='namespace的编辑锁';
 
 
-
+#youzhihao:
+#AppId,
 # Dump of table release
 # ------------------------------------------------------------
 
@@ -324,13 +327,15 @@ CREATE TABLE `ReleaseHistory` (
   KEY `IX_DataChange_LastTime` (`DataChange_LastTime`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='发布历史';
 
-
+#youzhihao
+#消息表
 # Dump of table releasemessage
 # ------------------------------------------------------------
 
 DROP TABLE IF EXISTS `ReleaseMessage`;
 
 CREATE TABLE `ReleaseMessage` (
+  `Id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `Id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增主键',
   `Message` varchar(1024) NOT NULL DEFAULT '' COMMENT '发布的消息内容',
   `DataChange_LastTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改时间',

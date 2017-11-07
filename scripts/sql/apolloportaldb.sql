@@ -302,7 +302,8 @@ CREATE TABLE `Authorities` (
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
+#youzhihao:
+#apollo.portal.envs:可选值DEV,FAT,UAT,PRO
 # Config
 # ------------------------------------------------------------
 INSERT INTO `ServerConfig` (`Key`, `Value`, `Comment`)
