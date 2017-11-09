@@ -100,6 +100,7 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
       m_upstream.removeChangeListener(this);
     }
     m_upstream = upstreamConfigRepository;
+    //youzhihao:todo 这个地方是不是多调用一次trySyncFromUpstream,实际在构造函数中trySync()方法已经调用过一次了
     trySyncFromUpstream();
     upstreamConfigRepository.addChangeListener(this);
   }

@@ -89,9 +89,9 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
     gson = new Gson();
     //youzhihao:第一拉去配置信息
     this.trySync();
-    //youzhihao:保持一个30秒的长连接，感知最新namespace配置的变化
-    this.schedulePeriodicRefresh();
     //youzhihao:5分钟推送当前客户端的配置中信息，进行补偿
+    this.schedulePeriodicRefresh();
+    //youzhihao:保持一个30秒的长连接，感知最新namespace配置的变化
     this.scheduleLongPollingRefresh();
   }
 

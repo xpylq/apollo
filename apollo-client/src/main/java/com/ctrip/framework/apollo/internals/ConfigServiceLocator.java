@@ -37,6 +37,7 @@ public class ConfigServiceLocator {
   private Type m_responseType;
   private ScheduledExecutorService m_executorService;
   private static final Joiner.MapJoiner MAP_JOINER = Joiner.on("&").withKeyValueSeparator("=");
+  //实际就是一个转换普通字符成为符合url编码规范的字符按
   private static final Escaper queryParamEscaper = UrlEscapers.urlFormParameterEscaper();
 
   /**
