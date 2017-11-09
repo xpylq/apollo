@@ -13,6 +13,7 @@ import java.util.Properties;
  * 
  * Currently, apollo supports local/dev/fat/uat/lpt/pro environments.
  */
+//youzhihao:获取meta的地方，-D参数优先级最高
 public class MetaDomainConsts {
 
   private static Map<Env, Object> domains = new HashMap<>();

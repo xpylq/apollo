@@ -16,6 +16,7 @@ import com.google.common.collect.Maps;
 public class DefaultConfigManager implements ConfigManager {
   private ConfigFactoryManager m_factoryManager;
 
+  //youzhihao:存放apollo所有namespace对应的配置信息
   private Map<String, Config> m_configs = Maps.newConcurrentMap();
   private Map<String, ConfigFile> m_configFiles = Maps.newConcurrentMap();
 

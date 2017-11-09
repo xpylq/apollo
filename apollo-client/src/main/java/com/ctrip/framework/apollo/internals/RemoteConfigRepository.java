@@ -87,8 +87,11 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
     m_loadConfigFailSchedulePolicy = new ExponentialSchedulePolicy(m_configUtil.getOnErrorRetryInterval(),
         m_configUtil.getOnErrorRetryInterval() * 8);
     gson = new Gson();
+    //youzhihao:第一拉去配置信息
     this.trySync();
+    //youzhihao:保持一个30秒的长连接，感知最新namespace配置的变化
     this.schedulePeriodicRefresh();
+    //youzhihao:5分钟推送当前客户端的配置中信息，进行补偿
     this.scheduleLongPollingRefresh();
   }
 
@@ -121,12 +124,14 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
         m_configUtil.getRefreshIntervalTimeUnit());
   }
 
+  //youzhihao:同步配置信息
   @Override
   protected synchronized void sync() {
     Transaction transaction = Tracer.newTransaction("Apollo.ConfigService", "syncRemoteConfig");
 
     try {
       ApolloConfig previous = m_configCache.get();
+      //youzhihao:从apollo获取最新的配置
       ApolloConfig current = loadApolloConfig();
 
       //reference equals means HTTP 304

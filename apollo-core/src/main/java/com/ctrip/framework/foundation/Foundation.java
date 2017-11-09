@@ -9,6 +9,7 @@ import com.ctrip.framework.foundation.spi.provider.ServerProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//youzhihao:这个类就是用来加载客户端的一些配置信息
 public abstract class Foundation {
   private static final Logger logger = LoggerFactory.getLogger(Foundation.class);
   private static Object lock = new Object();

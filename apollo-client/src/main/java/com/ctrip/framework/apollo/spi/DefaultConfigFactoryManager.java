@@ -19,6 +19,7 @@ public class DefaultConfigFactoryManager implements ConfigFactoryManager {
 
   @Override
   public ConfigFactory getFactory(String namespace) {
+    //youzhihao:从注册机中获取configFactory，优先级最高，当用户自定义configFacotry并且注册到才获取到
     // step 1: check hacked factory
     ConfigFactory factory = m_registry.getFactory(namespace);
 

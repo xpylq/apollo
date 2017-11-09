@@ -59,6 +59,7 @@ public class PropertySourcesProcessor implements BeanFactoryPostProcessor, Envir
     while (iterator.hasNext()) {
       int order = iterator.next();
       for (String namespace : NAMESPACE_NAMES.get(order)) {
+        //youzhihao:第一次拉取apollo对应的配置
         Config config = ConfigService.getConfig(namespace);
 
         composite.addPropertySource(new ConfigPropertySource(namespace, config));

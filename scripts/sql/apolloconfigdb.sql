@@ -273,7 +273,7 @@ CREATE TABLE `NamespaceLock` (
 
 
 #youzhihao:
-#AppId,
+#流水表,不是唯一的
 # Dump of table release
 # ------------------------------------------------------------
 
@@ -328,7 +328,7 @@ CREATE TABLE `ReleaseHistory` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='发布历史';
 
 #youzhihao
-#消息表
+#消息表,做队列用的
 # Dump of table releasemessage
 # ------------------------------------------------------------
 
