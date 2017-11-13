@@ -60,6 +60,7 @@ public class RemoteConfigLongPollService {
   private RateLimiter m_longPollRateLimiter;
   private final AtomicBoolean m_longPollStarted;
   private final Multimap<String, RemoteConfigRepository> m_longPollNamespaces;
+  //youzhihao:<namespace,notificationId>
   private final ConcurrentMap<String, Long> m_notifications;
   private final Map<String, ApolloNotificationMessages> m_remoteNotificationMessages;//namespaceName -> watchedKey -> notificationId
   private Type m_responseType;

@@ -111,8 +111,11 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     DeferredResultWrapper deferredResultWrapper = new DeferredResultWrapper();
     Set<String> namespaces = Sets.newHashSet();
     Map<String, Long> clientSideNotifications = Maps.newHashMap();
+    //youzhihao:做一些空namespace和大小写兼容性的过滤，筛选出符合规则的配置消息对象
+    //youzhihao:<做过大小写处理和properties后缀处理的namespace,ApolloConfigNotification中的namespace只做过properties后缀处理>
     Map<String, ApolloConfigNotification> filteredNotifications = filterNotifications(appId, notifications);
-
+    //youzhihao:这里主要是初始化namespaces和clientSideNotifications这两个集合
+    //youzhihao:string里面放的都是normalizedNamespace(做过大小写处理和properties后缀处理的namespace)
     for (Map.Entry<String, ApolloConfigNotification> notificationEntry : filteredNotifications.entrySet()) {
       String normalizedNamespace = notificationEntry.getKey();
       ApolloConfigNotification notification = notificationEntry.getValue();
@@ -181,9 +184,11 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
       if (Strings.isNullOrEmpty(notification.getNamespaceName())) {
         continue;
       }
+      //youzhihao:去掉.properties后缀
       //strip out .properties suffix
       String originalNamespace = namespaceUtil.filterNamespaceName(notification.getNamespaceName());
       notification.setNamespaceName(originalNamespace);
+
       //fix the character case issue, such as FX.apollo <-> fx.apollo
       String normalizedNamespace = namespaceUtil.normalizeNamespace(appId, originalNamespace);
 
