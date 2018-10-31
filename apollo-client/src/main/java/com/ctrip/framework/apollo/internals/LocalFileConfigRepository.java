@@ -1,5 +1,6 @@
 package com.ctrip.framework.apollo.internals;
 
+import com.ctrip.framework.apollo.enums.ConfigSourceType;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,6 +38,8 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
   private final ConfigUtil m_configUtil;
   private volatile Properties m_fileProperties;
   private volatile ConfigRepository m_upstream;
+
+  private volatile ConfigSourceType m_sourceType = ConfigSourceType.LOCAL;
 
   /**
    * Constructor.
@@ -106,13 +109,18 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
   }
 
   @Override
+  public ConfigSourceType getSourceType() {
+    return m_sourceType;
+  }
+
+  @Override
   public void onRepositoryChange(String namespace, Properties newProperties) {
     if (newProperties.equals(m_fileProperties)) {
       return;
     }
     Properties newFileProperties = new Properties();
     newFileProperties.putAll(newProperties);
-    updateFileProperties(newFileProperties);
+    updateFileProperties(newFileProperties, m_upstream.getSourceType());
     this.fireRepositoryChange(namespace, newProperties);
   }
 
@@ -130,6 +138,7 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
     try {
       transaction.addData("Basedir", m_baseDir.getAbsolutePath());
       m_fileProperties = this.loadFromLocalCacheFile(m_baseDir, m_namespace);
+      m_sourceType = ConfigSourceType.LOCAL;
       transaction.setStatus(Transaction.SUCCESS);
     } catch (Throwable ex) {
       Tracer.logEvent("ApolloConfigException", ExceptionUtil.getDetailMessage(ex));
@@ -141,6 +150,7 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
     }
 
     if (m_fileProperties == null) {
+      m_sourceType = ConfigSourceType.NONE;
       throw new ApolloConfigException(
           "Load config from local config failed!", exception);
     }
@@ -151,8 +161,7 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
       return false;
     }
     try {
-      Properties properties = m_upstream.getConfig();
-      updateFileProperties(properties);
+      updateFileProperties(m_upstream.getConfig(), m_upstream.getSourceType());
       return true;
     } catch (Throwable ex) {
       Tracer.logError(ex);
@@ -163,7 +172,8 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
     return false;
   }
 
-  private synchronized void updateFileProperties(Properties newProperties) {
+  private synchronized void updateFileProperties(Properties newProperties, ConfigSourceType sourceType) {
+    this.m_sourceType = sourceType;
     if (newProperties.equals(m_fileProperties)) {
       return;
     }
