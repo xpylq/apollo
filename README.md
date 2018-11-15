@@ -1,5 +1,6 @@
-![apollo-logo](apollo-portal/src/main/resources/static/img/logo-detail.png)
-================
+<img src="https://raw.githubusercontent.com/ctripcorp/apollo/master/doc/images/logo/logo-simple.png" alt="apollo-logo" width="60%">
+
+# Apollo - A reliable configuration management system
 
 [![Build Status](https://travis-ci.org/ctripcorp/apollo.svg?branch=master)](https://travis-ci.org/ctripcorp/apollo)
 [![GitHub release](https://img.shields.io/github/release/ctripcorp/apollo.svg)](https://github.com/ctripcorp/apollo/releases)
@@ -231,3 +232,7 @@ The project is licensed under the [Apache 2 license](https://github.com/ctripcor
 ![YEELIGHT](https://raw.githubusercontent.com/ctripcorp/apollo/master/doc/images/known-users/yeelight.png) 
 ![积目](https://raw.githubusercontent.com/ctripcorp/apollo/master/doc/images/known-users/itsgmu.png) 
 ![极致医疗](https://raw.githubusercontent.com/ctripcorp/apollo/master/doc/images/known-users/acmedcare.png) 
+![金汇金融](https://raw.githubusercontent.com/ctripcorp/apollo/master/doc/images/known-users/jinhui365.png) 
+![久柏易游](https://raw.githubusercontent.com/ctripcorp/apollo/master/doc/images/known-users/900etrip.png) 
+![小麦铺](https://raw.githubusercontent.com/ctripcorp/apollo/master/doc/images/known-users/24xiaomai.png) 
+![搜款网](https://raw.githubusercontent.com/ctripcorp/apollo/master/doc/images/known-users/vvic.png) 
