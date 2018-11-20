@@ -15,6 +15,7 @@ import org.springframework.util.ReflectionUtils;
  */
 public abstract class ApolloProcessor implements BeanPostProcessor, PriorityOrdered {
 
+  //在bean实例化之前的钩子
   @Override
   public Object postProcessBeforeInitialization(Object bean, String beanName)
       throws BeansException {
@@ -52,6 +53,7 @@ public abstract class ApolloProcessor implements BeanPostProcessor, PriorityOrde
 
   private List<Field> findAllField(Class clazz) {
     final List<Field> res = new LinkedList<>();
+    //值得借鉴，spring的反射工具包，能够遍历一个class中的所有field
     ReflectionUtils.doWithFields(clazz, new ReflectionUtils.FieldCallback() {
       @Override
       public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
@@ -63,6 +65,7 @@ public abstract class ApolloProcessor implements BeanPostProcessor, PriorityOrde
 
   private List<Method> findAllMethod(Class clazz) {
     final List<Method> res = new LinkedList<>();
+    //值得借鉴，spring的反射工具包，能够遍历一个class中的所有method
     ReflectionUtils.doWithMethods(clazz, new ReflectionUtils.MethodCallback() {
       @Override
       public void doWith(Method method) throws IllegalArgumentException, IllegalAccessException {

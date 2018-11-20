@@ -17,6 +17,7 @@ import com.google.inject.Singleton;
 
 /**
  * Guice injector
+ * 使用guice做了一个内部的ioc管理，初始化了一些apollo内部类
  * @author Jason Song(song_s@ctrip.com)
  */
 public class DefaultInjector implements Injector {

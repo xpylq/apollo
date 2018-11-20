@@ -20,6 +20,7 @@ import com.ctrip.framework.apollo.util.ConfigUtil;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * 创建Config实例的工厂方法
  */
 public class DefaultConfigFactory implements ConfigFactory {
   private static final Logger logger = LoggerFactory.getLogger(DefaultConfigFactory.class);
@@ -55,6 +56,7 @@ public class DefaultConfigFactory implements ConfigFactory {
     return null;
   }
 
+  //创建ConfigRepository,默认为创建RemoteConfigRepository
   LocalFileConfigRepository createLocalConfigRepository(String namespace) {
     if (m_configUtil.isInLocalMode()) {
       logger.warn(

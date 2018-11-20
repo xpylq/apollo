@@ -37,10 +37,14 @@ import org.springframework.core.env.PropertySource;
  * {@link org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor} is that lower versions of
  * Spring (e.g. 3.1.1) doesn't support registering BeanDefinitionRegistryPostProcessor in ImportBeanDefinitionRegistrar
  * - {@link com.ctrip.framework.apollo.spring.annotation.ApolloConfigRegistrar}
- *
+ * 核心类
+ * 自定义的BeanFactoryPostProcessor,
+ * 1. 和spring内部的property机制集成，
+ * 2. 和spring内部的占位符机制集成
  * @author Jason Song(song_s@ctrip.com)
  */
 public class PropertySourcesProcessor implements BeanFactoryPostProcessor, EnvironmentAware, PriorityOrdered {
+  //guava的一种高效集合类,类似hash<String,List<String>>,LinkedHashMultimap按插入顺序进行遍历
   private static final Multimap<Integer, String> NAMESPACE_NAMES = LinkedHashMultimap.create();
   private static final Set<BeanFactory> AUTO_UPDATE_INITIALIZED_BEAN_FACTORIES = Sets.newConcurrentHashSet();
 
@@ -60,29 +64,31 @@ public class PropertySourcesProcessor implements BeanFactoryPostProcessor, Envir
   }
 
   private void initializePropertySources() {
+    //查看是否已经注册了apollo的PropertySource
     if (environment.getPropertySources().contains(PropertySourcesConstants.APOLLO_PROPERTY_SOURCE_NAME)) {
       //already initialized
       return;
     }
+    //生成apollo的PropertySource
     CompositePropertySource composite = new CompositePropertySource(PropertySourcesConstants.APOLLO_PROPERTY_SOURCE_NAME);
 
     //sort by order asc
+    //namespace根据order进行排序
     ImmutableSortedSet<Integer> orders = ImmutableSortedSet.copyOf(NAMESPACE_NAMES.keySet());
     Iterator<Integer> iterator = orders.iterator();
-
+    //获取所有配置
     while (iterator.hasNext()) {
       int order = iterator.next();
       for (String namespace : NAMESPACE_NAMES.get(order)) {
-        //youzhihao:第一次拉取apollo对应的配置
+        //核心方法，从apollo-config获取指定的配置
         Config config = ConfigService.getConfig(namespace);
-
         composite.addPropertySource(configPropertySourceFactory.getConfigPropertySource(namespace, config));
       }
     }
 
     // clean up
     NAMESPACE_NAMES.clear();
-
+    // 将CompositePropertySource的优先级调整到仅次于ApolloBootstrapPropertySources。
     // add after the bootstrap property source or to the first
     if (environment.getPropertySources()
         .contains(PropertySourcesConstants.APOLLO_BOOTSTRAP_PROPERTY_SOURCE_NAME)) {

@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.RateLimiter;
 public class DefaultConfig extends AbstractConfig implements RepositoryChangeListener {
   private static final Logger logger = LoggerFactory.getLogger(DefaultConfig.class);
   private final String m_namespace;
+  //保存classpath下对应的namespace配置文件
   private final Properties m_resourceProperties;
   private final AtomicReference<Properties> m_configProperties;
   private final ConfigRepository m_configRepository;
@@ -67,6 +68,17 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
     }
   }
 
+  /**
+   * 核心方法，真正定义了读取属性的顺序
+   * step1: System.getProperty(key)
+   * step2: 根据key 去apollo查询配置
+            a.服务端有，则拉去服务端配置
+            b.服务端没有，则读取apollo本地缓存的配置，默认路径:/opt/data/{appId}/config-cache
+   * step3: System.getenv(key)
+   * step4: 查询当前classloader下以namespaceName.properties命名的文件
+   * step5: 如果都没有,使用默认值
+   * @author youzhihao
+   */
   @Override
   public String getProperty(String key, String defaultValue) {
     // step 1: check system properties, i.e. -Dkey=value

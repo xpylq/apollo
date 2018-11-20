@@ -14,11 +14,14 @@ import org.springframework.util.ReflectionUtils;
 
 /**
  * Apollo Annotation Processor for Spring Application
+ * 在bean实例化后，初始化之前
+ * 处理apollo的两个注解@ApolloConfig和@ApolloConfigChangeListener
  *
  * @author Jason Song(song_s@ctrip.com)
  */
 public class ApolloAnnotationProcessor extends ApolloProcessor {
 
+  //将包含@ApolloConfig注解的属性赋值
   @Override
   protected void processField(Object bean, String beanName, Field field) {
     ApolloConfig annotation = AnnotationUtils.getAnnotation(field, ApolloConfig.class);
@@ -36,6 +39,7 @@ public class ApolloAnnotationProcessor extends ApolloProcessor {
     ReflectionUtils.setField(field, bean, config);
   }
 
+  //将包含@ApolloConfigChangeListener注解的方法，注册成为监听器方法
   @Override
   protected void processMethod(final Object bean, String beanName, final Method method) {
     ApolloConfigChangeListener annotation = AnnotationUtils

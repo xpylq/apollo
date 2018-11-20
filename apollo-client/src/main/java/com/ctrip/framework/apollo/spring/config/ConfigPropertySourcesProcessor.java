@@ -15,7 +15,10 @@ import com.ctrip.framework.apollo.spring.util.BeanRegistrationUtil;
 
 /**
  * Apollo Property Sources processor for Spring XML Based Application
- *
+ * spring bean 初始化时候集中hlok的顺序
+ * 1.BeanDefinitionRegistryPostProcessor.postProcessBeanDefinitionRegistry
+ * 2.BeanFactoryPostProcessor.postProcessBeanFactory
+ * 3.BeanPostProcessor
  * @author Jason Song(song_s@ctrip.com)
  */
 public class ConfigPropertySourcesProcessor extends PropertySourcesProcessor

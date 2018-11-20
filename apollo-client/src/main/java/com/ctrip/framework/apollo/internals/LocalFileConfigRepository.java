@@ -124,6 +124,12 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
     this.fireRepositoryChange(namespace, newProperties);
   }
 
+
+  /**
+   * 优先尝试获取服务端的配置，
+   * 如果获取失败，则尝试获取本地的备份配置
+   * @author youzhihao
+   */
   @Override
   protected void sync() {
     //sync with upstream immediately

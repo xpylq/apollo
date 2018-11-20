@@ -12,6 +12,8 @@ import com.google.common.base.Strings;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * xml配置apollo的解析处理入口
+ * 解析xml，然后创建一个ConfigPropertySourcesProcessor的BeanDefinition
  */
 public class NamespaceHandler extends NamespaceHandlerSupport {
   private static final Splitter NAMESPACE_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();

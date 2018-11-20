@@ -9,13 +9,15 @@ import com.ctrip.framework.apollo.spi.ConfigRegistry;
 
 /**
  * Entry point for client config use
- *
+ * 获取apollo服务端配置的入口
  * @author Jason Song(song_s@ctrip.com)
  */
 public class ConfigService {
-  private static final ConfigService s_instance = new ConfigService();
 
+  private static final ConfigService s_instance = new ConfigService();
+  //DefaultConfigManager
   private volatile ConfigManager m_configManager;
+  //DefaultConfigRegistry
   private volatile ConfigRegistry m_configRegistry;
 
   private ConfigManager getManager() {
@@ -73,7 +75,7 @@ public class ConfigService {
    * Manually set the config for the namespace specified, use with caution.
    *
    * @param namespace the namespace
-   * @param config    the config instance
+   * @param config the config instance
    */
   static void setConfig(String namespace, final Config config) {
     s_instance.getRegistry().register(namespace, new ConfigFactory() {
@@ -98,7 +100,7 @@ public class ConfigService {
    * Manually set the config factory for the namespace specified, use with caution.
    *
    * @param namespace the namespace
-   * @param factory   the factory instance
+   * @param factory the factory instance
    */
   static void setConfigFactory(String namespace, ConfigFactory factory) {
     s_instance.getRegistry().register(namespace, factory);

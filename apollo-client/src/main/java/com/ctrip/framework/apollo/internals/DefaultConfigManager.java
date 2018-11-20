@@ -14,10 +14,12 @@ import com.google.common.collect.Maps;
  * @author Jason Song(song_s@ctrip.com)
  */
 public class DefaultConfigManager implements ConfigManager {
+  //DefaultConfigFactoryManager
   private ConfigFactoryManager m_factoryManager;
 
-  //youzhihao:存放apollo所有namespace对应的配置信息
+  //存放apollo所有namespace对应的普通配置信息,Map<String,DefaultConfig>
   private Map<String, Config> m_configs = Maps.newConcurrentMap();
+  //存放apollo所有namespace对应的文件类型的配置信息
   private Map<String, ConfigFile> m_configFiles = Maps.newConcurrentMap();
 
   public DefaultConfigManager() {
@@ -33,6 +35,7 @@ public class DefaultConfigManager implements ConfigManager {
         config = m_configs.get(namespace);
 
         if (config == null) {
+          //DefaultConfigFactory
           ConfigFactory factory = m_factoryManager.getFactory(namespace);
 
           config = factory.create(namespace);
