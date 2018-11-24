@@ -13,7 +13,7 @@ import javax.persistence.Table;
 @Table(name = "GrayReleaseRule")
 @SQLDelete(sql = "Update GrayReleaseRule set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
-public class GrayReleaseRule extends BaseEntity{
+public class GrayReleaseRule extends BaseEntity {
 
   @Column(name = "appId", nullable = false)
   private String appId;
@@ -27,12 +27,18 @@ public class GrayReleaseRule extends BaseEntity{
   @Column(name = "BranchName", nullable = false)
   private String branchName;
 
+  //[{"clientAppId":"yanxuan-test","clientIpList":["127.0.0.1"]}]
   @Column(name = "Rules")
   private String rules;
 
+  //release表主键
   @Column(name = "releaseId", nullable = false)
   private Long releaseId;
 
+  //NamespaceBranchStatus,
+  // 0:删除
+  // 1:分支
+  // 2:已经合并
   @Column(name = "BranchStatus", nullable = false)
   private int branchStatus;
 

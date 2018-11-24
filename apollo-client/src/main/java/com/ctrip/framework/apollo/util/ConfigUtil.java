@@ -15,6 +15,7 @@ import com.google.common.base.Strings;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * 所有的apollo内部配置参数的工具类
  */
 public class ConfigUtil {
   private static final Logger logger = LoggerFactory.getLogger(ConfigUtil.class);

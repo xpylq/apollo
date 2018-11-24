@@ -42,6 +42,7 @@ import com.google.gson.reflect.TypeToken;
 public class ConfigController {
   private static final Splitter X_FORWARDED_FOR_SPLITTER = Splitter.on(",").omitEmptyStrings()
       .trimResults();
+  //DefaultConfigService
   @Autowired
   private ConfigService configService;
   @Autowired
@@ -56,6 +57,12 @@ public class ConfigController {
   private static final Type configurationTypeReference = new TypeToken<Map<String, String>>() {
       }.getType();
 
+  /**
+   * apollo-client获取配置的核心类
+   * @param clientSideReleaseKey 这个字段用来判断客户端的配置是否是最新的,如果是最新的则返回304
+   * @param messagesAsString ConfigServiceWithCache才用到，默认的DefaultConfigService不会用到
+   * @author youzhihao
+   */
   @RequestMapping(value = "/{appId}/{clusterName}/{namespace:.+}", method = RequestMethod.GET)
   public ApolloConfig queryConfig(@PathVariable String appId, @PathVariable String clusterName,
                                   @PathVariable String namespace,
@@ -70,15 +77,16 @@ public class ConfigController {
     //fix the character case issue, such as FX.apollo <-> fx.apollo
     namespace = namespaceUtil.normalizeNamespace(appId, namespace);
 
+    //尝试获取客户端的ip，这里有参考意义，从http协议的X-FORWARDED-FOR头里尝试获取
     if (Strings.isNullOrEmpty(clientIp)) {
       clientIp = tryToGetClientIp(request);
     }
-
     ApolloNotificationMessages clientMessages = transformMessages(messagesAsString);
 
     List<Release> releases = Lists.newLinkedList();
 
     String appClusterNameLoaded = clusterName;
+    //appId维度查找release
     if (!ConfigConsts.NO_APPID_PLACEHOLDER.equalsIgnoreCase(appId)) {
       Release currentAppRelease = configService.loadConfig(appId, clientIp, appId, clusterName, namespace,
           dataCenter, clientMessages);
@@ -91,6 +99,7 @@ public class ConfigController {
     }
 
     //if namespace does not belong to this appId, should check if there is a public configuration
+    //公有的维度查找release
     if (!namespaceBelongsToAppId(appId, namespace)) {
       Release publicRelease = this.findPublicConfig(appId, clientIp, clusterName, namespace,
           dataCenter, clientMessages);
@@ -108,12 +117,13 @@ public class ConfigController {
           assembleKey(appId, clusterName, originalNamespace, dataCenter));
       return null;
     }
-
+    //操作审计
     auditReleases(appId, clusterName, dataCenter, clientIp, releases);
 
     String mergedReleaseKey = releases.stream().map(Release::getReleaseKey)
             .collect(Collectors.joining(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR));
 
+    //如果和客户端传过来的releaseKey一致的话，说明客户端是最新的配置
     if (mergedReleaseKey.equals(clientSideReleaseKey)) {
       // Client side configuration is the same with server side, return 304
       response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
@@ -121,9 +131,10 @@ public class ConfigController {
           assembleKey(appId, appClusterNameLoaded, originalNamespace, dataCenter));
       return null;
     }
-
+    //如果客户端传来的releaseKey不一致，则获取最新的配置返回给客户端
     ApolloConfig apolloConfig = new ApolloConfig(appId, appClusterNameLoaded, originalNamespace,
         mergedReleaseKey);
+    //根据release获取最新的配置
     apolloConfig.setConfigurations(mergeReleaseConfigurations(releases));
 
     Tracer.logEvent("Apollo.Config.Found", assembleKey(appId, appClusterNameLoaded,
@@ -141,7 +152,7 @@ public class ConfigController {
     if (ConfigConsts.NO_APPID_PLACEHOLDER.equalsIgnoreCase(appId)) {
       return false;
     }
-
+    //这里要注意，公有的namespace，在私有的appNamesapce下没有存根
     AppNamespace appNamespace = appNamespaceService.findByAppIdAndNamespace(appId, namespaceName);
 
     return appNamespace != null;

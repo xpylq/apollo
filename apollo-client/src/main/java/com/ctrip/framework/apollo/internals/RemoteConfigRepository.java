@@ -43,6 +43,7 @@ import com.google.gson.Gson;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * 远程配置获取和同步的核心类，一个namespace对应一个RemoteConfigRepository
  */
 public class RemoteConfigRepository extends AbstractConfigRepository {
   private static final Logger logger = LoggerFactory.getLogger(RemoteConfigRepository.class);
@@ -55,6 +56,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
   private final HttpUtil m_httpUtil;
   private final ConfigUtil m_configUtil;
   private final RemoteConfigLongPollService remoteConfigLongPollService;
+  //apollo内部的配置映射实体
   private volatile AtomicReference<ApolloConfig> m_configCache;
   private final String m_namespace;
   private final static ScheduledExecutorService m_executorService;
@@ -91,17 +93,19 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
     gson = new Gson();
     //第一拉去配置信息
     this.trySync();
-    //5分钟推送当前客户端的配置中信息，进行补偿
+    //5分钟推送当前客户端的配置中信息，进行补偿(实际也是调用trySync方法)
     this.schedulePeriodicRefresh();
-    //保持一个30秒的长连接，感知最新namespace配置的变化
+    //保持一个30秒的长连接，感知最新namespace配置的变化,使用RemoteConfigLongPollService去做
     this.scheduleLongPollingRefresh();
   }
 
+  //这里要注意，如果m_configCache中有值，则会返回缓存
   @Override
   public Properties getConfig() {
     if (m_configCache.get() == null) {
       this.sync();
     }
+    //转换ApolloConfig-->Properties
     return transformApolloConfigToProperties(m_configCache.get());
   }
 
@@ -115,6 +119,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
     return ConfigSourceType.REMOTE;
   }
 
+  //5分钟推送当前客户端的配置中信息，进行补偿，也是调用trySunc没啥好说的
   private void schedulePeriodicRefresh() {
     logger.debug("Schedule periodic refresh with interval: {} {}",
         m_configUtil.getRefreshInterval(), m_configUtil.getRefreshIntervalTimeUnit());
@@ -131,14 +136,14 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
         m_configUtil.getRefreshIntervalTimeUnit());
   }
 
-  //youzhihao:同步配置信息
+  //同步配置信息
   @Override
   protected synchronized void sync() {
     Transaction transaction = Tracer.newTransaction("Apollo.ConfigService", "syncRemoteConfig");
 
     try {
       ApolloConfig previous = m_configCache.get();
-      //youzhihao:从apollo获取最新的配置
+      //从apollo获取最新的配置
       ApolloConfig current = loadApolloConfig();
 
       //reference equals means HTTP 304
@@ -168,6 +173,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
     return result;
   }
 
+  //从apollo获取最新的配置
   private ApolloConfig loadApolloConfig() {
     if (!m_loadConfigRateLimiter.tryAcquire(5, TimeUnit.SECONDS)) {
       //wait at most 5 seconds
@@ -183,13 +189,15 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
     int maxRetries = m_configNeedForceRefresh.get() ? 2 : 1;
     long onErrorSleepTime = 0; // 0 means no sleep
     Throwable exception = null;
-
+    //获取config-server地址
     List<ServiceDTO> configServices = getConfigServices();
     String url = null;
+    //默认尝试次数=maxRetries*ServiceDTO的数量
     for (int i = 0; i < maxRetries; i++) {
       List<ServiceDTO> randomConfigServices = Lists.newLinkedList(configServices);
       Collections.shuffle(randomConfigServices);
       //Access the server which notifies the client first
+      //这里就是优先使用长轮询的config-server地址
       if (m_longPollServiceDto.get() != null) {
         randomConfigServices.add(0, m_longPollServiceDto.getAndSet(null));
       }
@@ -206,7 +214,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
             //ignore
           }
         }
-
+        //拼接url:http://10.216.40.201:8080/configs/apollo-demo/default/application?ip=10.242.34.76
         url = assembleQueryConfigUrl(configService.getHomepageUrl(), appId, cluster, m_namespace,
                 dataCenter, m_remoteMessages.get(), m_configCache.get());
 
@@ -223,7 +231,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 
           transaction.addData("StatusCode", response.getStatusCode());
           transaction.setStatus(Transaction.SUCCESS);
-
+          //服务端返回304，表示客户端当前的配置是最新的
           if (response.getStatusCode() == 304) {
             logger.debug("Config server responds with 304 HTTP status code.");
             return m_configCache.get();
@@ -276,7 +284,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
         Lists.newArrayList(pathEscaper.escape(appId), pathEscaper.escape(cluster),
             pathEscaper.escape(namespace));
     Map<String, String> queryParams = Maps.newHashMap();
-
+    //releaseKey很关键，这个值用来判断当前客户端的配置是否是最新的，如果是最新的则返回304
     if (previousConfig != null) {
       queryParams.put("releaseKey", queryParamEscaper.escape(previousConfig.getReleaseKey()));
     }

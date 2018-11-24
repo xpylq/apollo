@@ -15,6 +15,7 @@ public class ApolloConfig {
 
   private Map<String, String> configurations;
 
+  //当前版本的releaseKey
   private String releaseKey;
 
   public ApolloConfig() {

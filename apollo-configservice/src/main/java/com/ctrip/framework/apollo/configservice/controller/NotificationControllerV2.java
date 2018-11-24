@@ -49,11 +49,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author Jason Song(song_s@ctrip.com)
+ * @author Jason Song(song_s@ctrip.com) 核心类，客户端动态感知配置变更的接口
  */
 @RestController
 @RequestMapping("/notifications/v2")
 public class NotificationControllerV2 implements ReleaseMessageListener {
+
   private static final Logger logger = LoggerFactory.getLogger(NotificationControllerV2.class);
   private final Multimap<String, DeferredResultWrapper> deferredResults =
       Multimaps.synchronizedSetMultimap(HashMultimap.create());
@@ -88,6 +89,10 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
         ("NotificationControllerV2", true));
   }
 
+  /**
+   * @param notificationsAsString 所有需要监控的namespace
+   * @author youzhihao
+   */
   @RequestMapping(method = RequestMethod.GET)
   public DeferredResult<ResponseEntity<List<ApolloConfigNotification>>> pollNotification(
       @RequestParam(value = "appId") String appId,
@@ -98,8 +103,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     List<ApolloConfigNotification> notifications = null;
 
     try {
-      notifications =
-          gson.fromJson(notificationsAsString, notificationsTypeReference);
+      notifications = gson.fromJson(notificationsAsString, notificationsTypeReference);
     } catch (Throwable ex) {
       Tracer.logError(ex);
     }
@@ -108,14 +112,15 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
       throw new BadRequestException("Invalid format of notifications: " + notificationsAsString);
     }
 
+    //核心类,创建一个DeferredResult的代理
     DeferredResultWrapper deferredResultWrapper = new DeferredResultWrapper();
+    //Set<namespace>
     Set<String> namespaces = Sets.newHashSet();
+    //Map<namespace,notificationId>
     Map<String, Long> clientSideNotifications = Maps.newHashMap();
-    //做一些空namespace和大小写兼容性的过滤，筛选出符合规则的配置消息对象
-    //<做过大小写处理和properties后缀处理的namespace,ApolloConfigNotification中的namespace只做过properties后缀处理>
+    //Map<namespace,ApolloConfigNotification>,做一些空namespace和大小写兼容性的过滤，筛选出符合规则的配置消息对象
     Map<String, ApolloConfigNotification> filteredNotifications = filterNotifications(appId, notifications);
-    //这里主要是初始化namespaces和clientSideNotifications这两个集合
-    //string里面放的都是normalizedNamespace(做过大小写处理和properties后缀处理的namespace)
+    //
     for (Map.Entry<String, ApolloConfigNotification> notificationEntry : filteredNotifications.entrySet()) {
       String normalizedNamespace = notificationEntry.getKey();
       ApolloConfigNotification notification = notificationEntry.getValue();
@@ -129,7 +134,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     if (CollectionUtils.isEmpty(namespaces)) {
       throw new BadRequestException("Invalid format of notifications: " + notificationsAsString);
     }
-
+    //<namespace,List<String>>，其中list中的String为:"${appId},${cluster},${namespace}"结构的字符串
     Multimap<String, String> watchedKeysMap =
         watchKeysUtil.assembleAllWatchKeys(appId, cluster, namespaces, dataCenter);
 
@@ -178,13 +183,13 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
   }
 
   private Map<String, ApolloConfigNotification> filterNotifications(String appId,
-                                                                    List<ApolloConfigNotification> notifications) {
+      List<ApolloConfigNotification> notifications) {
     Map<String, ApolloConfigNotification> filteredNotifications = Maps.newHashMap();
     for (ApolloConfigNotification notification : notifications) {
       if (Strings.isNullOrEmpty(notification.getNamespaceName())) {
         continue;
       }
-      //youzhihao:去掉.properties后缀
+      //去掉.properties后缀
       //strip out .properties suffix
       String originalNamespace = namespaceUtil.filterNamespaceName(notification.getNamespaceName());
       notification.setNamespaceName(originalNamespace);
@@ -206,9 +211,9 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
   }
 
   private List<ApolloConfigNotification> getApolloConfigNotifications(Set<String> namespaces,
-                                                                      Map<String, Long> clientSideNotifications,
-                                                                      Multimap<String, String> watchedKeysMap,
-                                                                      List<ReleaseMessage> latestReleaseMessages) {
+      Map<String, Long> clientSideNotifications,
+      Multimap<String, String> watchedKeysMap,
+      List<ReleaseMessage> latestReleaseMessages) {
     List<ApolloConfigNotification> newNotifications = Lists.newArrayList();
     if (!CollectionUtils.isEmpty(latestReleaseMessages)) {
       Map<String, Long> latestNotifications = Maps.newHashMap();

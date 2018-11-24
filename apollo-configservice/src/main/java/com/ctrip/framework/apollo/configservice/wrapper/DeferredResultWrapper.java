@@ -20,7 +20,9 @@ public class DeferredResultWrapper {
   private static final ResponseEntity<List<ApolloConfigNotification>>
       NOT_MODIFIED_RESPONSE_LIST = new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
 
+  //原始的namespace和处理过后的namespace的一个映射关系
   private Map<String, String> normalizedNamespaceNameToOriginalNamespaceName;
+  //核心类，http请求hold住60秒的关键类
   private DeferredResult<ResponseEntity<List<ApolloConfigNotification>>> result;
 
 
@@ -51,8 +53,10 @@ public class DeferredResultWrapper {
 
   /**
    * The namespace name is used as a key in client side, so we have to return the original one instead of the correct one
+   * 这里
    */
   public void setResult(List<ApolloConfigNotification> notifications) {
+    //这里做一个转换，再将处理过后的标准namespace转换成客户端传过来的namespace
     if (normalizedNamespaceNameToOriginalNamespaceName != null) {
       notifications.stream().filter(notification -> normalizedNamespaceNameToOriginalNamespaceName.containsKey
           (notification.getNamespaceName())).forEach(notification -> notification.setNamespaceName(

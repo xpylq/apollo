@@ -46,18 +46,16 @@ public class WatchKeysUtil {
   public Multimap<String, String> assembleAllWatchKeys(String appId, String clusterName,
                                                        Set<String> namespaces,
                                                        String dataCenter) {
-    Multimap<String, String> watchedKeysMap =
-        assembleWatchKeys(appId, clusterName, namespaces, dataCenter);
-
+    Multimap<String, String> watchedKeysMap = assembleWatchKeys(appId, clusterName, namespaces, dataCenter);
     //Every app has an 'application' namespace
+    //如果除了默认的namespace:application以为还有其他的namespace
     if (!(namespaces.size() == 1 && namespaces.contains(ConfigConsts.NAMESPACE_APPLICATION))) {
       Set<String> namespacesBelongToAppId = namespacesBelongToAppId(appId, namespaces);
       Set<String> publicNamespaces = Sets.difference(namespaces, namespacesBelongToAppId);
-
+      //watchekey增加public下的namespace
       //Listen on more namespaces if it's a public namespace
       if (!publicNamespaces.isEmpty()) {
-        watchedKeysMap
-            .putAll(findPublicConfigWatchKeys(appId, clusterName, publicNamespaces, dataCenter));
+        watchedKeysMap.putAll(findPublicConfigWatchKeys(appId, clusterName, publicNamespaces, dataCenter));
       }
     }
 

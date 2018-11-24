@@ -46,6 +46,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * 长轮询动态感知服务端最新配置
+ * 默认客户端超时是90秒，服务端60秒内没有配置变更则断开，返回304
  */
 public class RemoteConfigLongPollService {
   private static final Logger logger = LoggerFactory.getLogger(RemoteConfigLongPollService.class);
@@ -61,7 +63,8 @@ public class RemoteConfigLongPollService {
   private RateLimiter m_longPollRateLimiter;
   private final AtomicBoolean m_longPollStarted;
   private final Multimap<String, RemoteConfigRepository> m_longPollNamespaces;
-  //youzhihao:<namespace,notificationId>
+  //这里存放所有需要长轮询，感知服务端最新配置的namespace
+  //<namespace,notificationId>
   private final ConcurrentMap<String, Long> m_notifications;
   private final Map<String, ApolloNotificationMessages> m_remoteNotificationMessages;//namespaceName -> watchedKey -> notificationId
   private Type m_responseType;
@@ -94,7 +97,9 @@ public class RemoteConfigLongPollService {
 
   public boolean submit(String namespace, RemoteConfigRepository remoteConfigRepository) {
     boolean added = m_longPollNamespaces.put(namespace, remoteConfigRepository);
+    //将指定namespace加入长轮询列表
     m_notifications.putIfAbsent(namespace, INIT_NOTIFICATION_ID);
+    //如果没有启动长轮询，则启动长轮询
     if (!m_longPollStarted.get()) {
       startLongPolling();
     }
@@ -138,6 +143,7 @@ public class RemoteConfigLongPollService {
     this.m_longPollingStopped.compareAndSet(false, true);
   }
 
+  //长轮询核心的方法
   private void doLongPollingRefresh(String appId, String cluster, String dataCenter) {
     final Random random = new Random();
     ServiceDTO lastServiceDto = null;
@@ -156,9 +162,9 @@ public class RemoteConfigLongPollService {
           List<ServiceDTO> configServices = getConfigServices();
           lastServiceDto = configServices.get(random.nextInt(configServices.size()));
         }
-
-        url =
-            assembleLongPollRefreshUrl(lastServiceDto.getHomepageUrl(), appId, cluster, dataCenter,
+        //拼接url:http://10.216.40.201:8080/notifications/v2?cluster=default&appId=apollo-demo&ip=10.242.34.76&notifications=%5B%7B%22namespaceName%22%3A%22application%22%2C%22notificationId%22%3A-1%7D%5D
+        //这里有注意，所有的namespace都是统一建立一个长轮询连接，然后在
+        url = assembleLongPollRefreshUrl(lastServiceDto.getHomepageUrl(), appId, cluster, dataCenter,
                 m_notifications);
 
         logger.debug("Long polling from {}", url);
@@ -171,6 +177,7 @@ public class RemoteConfigLongPollService {
             m_httpUtil.doGet(request, m_responseType);
 
         logger.debug("Long polling response: {}, url: {}", response.getStatusCode(), url);
+        //statusCode=200，则表示配置有变更
         if (response.getStatusCode() == 200 && response.getBody() != null) {
           updateNotifications(response.getBody());
           updateRemoteNotifications(response.getBody());

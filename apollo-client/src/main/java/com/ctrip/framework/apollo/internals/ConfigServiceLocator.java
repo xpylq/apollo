@@ -31,6 +31,7 @@ import com.google.common.escape.Escaper;
 import com.google.common.net.UrlEscapers;
 import com.google.gson.reflect.TypeToken;
 
+//通过meta地址，获取config-server地址的路由类
 public class ConfigServiceLocator {
   private static final Logger logger = LoggerFactory.getLogger(ConfigServiceLocator.class);
   private HttpUtil m_httpUtil;

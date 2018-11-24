@@ -12,6 +12,12 @@ import javax.persistence.Table;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * 每次发布，都会有一个Release表的记录
+ * 核心备注:
+ * 1.Release表是真正的拉去配置的核心表，每一次发布的时候，该app的namespace下的配置都会记录在Release表的Configurations字段里
+ * 2.灰度发布和正常发布的Release记录是根据ClusterName来区分的，因此灰度发布的Release记录，依靠先查找GrayReleaseRule的规则，匹配规则后，获取releaseId来查找对应的Release记录。
+ * 例如:灰度发布的ClusterName=20181123183830-e4bdecabe0e49897,正常发布的ClusterName=default
+ *
  */
 @Entity
 @Table(name = "Release")
