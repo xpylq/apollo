@@ -62,10 +62,12 @@ public class RemoteConfigLongPollService {
   private SchedulePolicy m_longPollFailSchedulePolicyInSecond;
   private RateLimiter m_longPollRateLimiter;
   private final AtomicBoolean m_longPollStarted;
+  //存放需要长轮询的namespace,一个namespace对应一个RemoteConfigRepository
   private final Multimap<String, RemoteConfigRepository> m_longPollNamespaces;
   //这里存放所有需要长轮询，感知服务端最新配置的namespace
-  //<namespace,notificationId>
+  //<namespace,notificationId>,notificationId是服务端ReleaseMessage表的Id，长轮询请求传给服务端，然后和最新的id做比较，来判断是否有最新配置变更
   private final ConcurrentMap<String, Long> m_notifications;
+  //<namespace,Map<watchedKey,notificationId>
   private final Map<String, ApolloNotificationMessages> m_remoteNotificationMessages;//namespaceName -> watchedKey -> notificationId
   private Type m_responseType;
   private Gson gson;
@@ -77,6 +79,7 @@ public class RemoteConfigLongPollService {
    * Constructor.
    */
   public RemoteConfigLongPollService() {
+    //fail-over策略，默认一秒重试，然后再次失败，重试时间间隔2的次方，最大为120秒后重试.
     m_longPollFailSchedulePolicyInSecond = new ExponentialSchedulePolicy(1, 120); //in second
     m_longPollingStopped = new AtomicBoolean(false);
     m_longPollingService = Executors.newSingleThreadExecutor(
@@ -159,6 +162,7 @@ public class RemoteConfigLongPollService {
       String url = null;
       try {
         if (lastServiceDto == null) {
+          //这里很重要，获取所有config地址，然后随机获取一个。是否轮询更好，轮询对fast-failover更加友好，因为configServer启动后，会从最大的messageRelease开始扫描，在启动之前发布的配置是感知不到的。
           List<ServiceDTO> configServices = getConfigServices();
           lastServiceDto = configServices.get(random.nextInt(configServices.size()));
         }
@@ -179,8 +183,11 @@ public class RemoteConfigLongPollService {
         logger.debug("Long polling response: {}, url: {}", response.getStatusCode(), url);
         //statusCode=200，则表示配置有变更
         if (response.getStatusCode() == 200 && response.getBody() != null) {
+          //更新m_notifications
           updateNotifications(response.getBody());
+          //更新m_remoteNotificationMessages
           updateRemoteNotifications(response.getBody());
+          //通知namespace配置有变更
           transaction.addData("Result", response.getBody().toString());
           notify(lastServiceDto, response.getBody());
         }
@@ -236,6 +243,7 @@ public class RemoteConfigLongPollService {
     }
   }
 
+  //更新当前m_notifications的namespace的notificationId，实际就是服务端ReleaseMessage表的id
   private void updateNotifications(List<ApolloConfigNotification> deltaNotifications) {
     for (ApolloConfigNotification notification : deltaNotifications) {
       if (Strings.isNullOrEmpty(notification.getNamespaceName())) {

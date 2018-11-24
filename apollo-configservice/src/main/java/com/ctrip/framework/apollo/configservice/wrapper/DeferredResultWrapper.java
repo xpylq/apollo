@@ -37,7 +37,7 @@ public class DeferredResultWrapper {
     normalizedNamespaceNameToOriginalNamespaceName.put(normalizedNamespaceName, originalNamespaceName);
   }
 
-
+  //hold住请求
   public void onTimeout(Runnable timeoutCallback) {
     result.onTimeout(timeoutCallback);
   }

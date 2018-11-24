@@ -2,6 +2,8 @@ package com.ctrip.framework.apollo.core.schedule;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * fail-over策略，默认一秒重试，然后再次失败，重试时间间隔2的次方，最大为120秒后重试.
+ * 成功后重置时间
  */
 public class ExponentialSchedulePolicy implements SchedulePolicy {
   private final long delayTimeLowerBound;

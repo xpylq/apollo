@@ -43,6 +43,7 @@ public class ConfigServiceAutoConfiguration {
     return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
   }
 
+  //将所有需要ReleaseMessage消息的类，加入监听模式，当ReleaseMessageScanner扫描到新的消息，则通知这些类
   @Configuration
   static class MessageScannerConfiguration {
     @Autowired

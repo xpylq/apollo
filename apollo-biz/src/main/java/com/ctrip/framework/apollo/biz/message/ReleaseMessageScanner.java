@@ -21,7 +21,10 @@ import com.google.common.collect.Lists;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
- * youzhihao:消费数据库的发布队列
+ * 核心类
+ * 用于扫描ReleaseMessage表，ReleaseMessage是configServer和adminServer之间发布通信的队列
+ * 发布流程:
+ *  portal发布-->adminServer插入ReleaseMessage表-->configServer扫描ReleaseMessage表，然后通知NotificationControllerV2类中存放的deferredResults
  */
 public class ReleaseMessageScanner implements InitializingBean {
   private static final Logger logger = LoggerFactory.getLogger(ReleaseMessageScanner.class);
@@ -42,8 +45,11 @@ public class ReleaseMessageScanner implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() throws Exception {
+    //获取扫描的间隔配置，默认一秒一次
     databaseScanInterval = bizConfig.releaseMessageScanIntervalInMilli();
+    //获取最大的messageId
     maxIdScanned = loadLargestMessageId();
+    //启动定时扫描任务(默认一秒一次)
     executorService.scheduleWithFixedDelay((Runnable) () -> {
       Transaction transaction = Tracer.newTransaction("Apollo.ReleaseMessageScanner", "scanMessage");
       try {
@@ -91,6 +97,7 @@ public class ReleaseMessageScanner implements InitializingBean {
     if (CollectionUtils.isEmpty(releaseMessages)) {
       return false;
     }
+    //通知监听消息的类
     fireMessageScanned(releaseMessages);
     int messageScanned = releaseMessages.size();
     maxIdScanned = releaseMessages.get(messageScanned - 1).getId();

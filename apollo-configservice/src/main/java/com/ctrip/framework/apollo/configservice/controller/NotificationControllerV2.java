@@ -56,6 +56,8 @@ import java.util.concurrent.TimeUnit;
 public class NotificationControllerV2 implements ReleaseMessageListener {
 
   private static final Logger logger = LoggerFactory.getLogger(NotificationControllerV2.class);
+  //存放每次请求需要监听的watchkey和对应的DeferredResult,<watcheKey,List<DeferredResult>>,一个DeferredResult可以看成是一个请求，也就是一个客户端的长连接,一个watchkey可能对应很多个客户端的长连接
+  //集合里的监听对象，由ReleaseMessageScanner负责通知
   private final Multimap<String, DeferredResultWrapper> deferredResults =
       Multimaps.synchronizedSetMultimap(HashMultimap.create());
   private static final Splitter STRING_SPLITTER =
@@ -90,7 +92,8 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
   }
 
   /**
-   * @param notificationsAsString 所有需要监控的namespace
+   * hold住客户端的长连接
+   * @param notificationsAsString 所有需要监控的namespace，ApolloConfigNotification
    * @author youzhihao
    */
   @RequestMapping(method = RequestMethod.GET)
@@ -144,6 +147,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
         releaseMessageService.findLatestReleaseMessagesGroupByMessages(watchedKeys);
 
     /**
+     * jpa的数据库连接默认会和线程绑定，这里使用DeferredResult来hold住请求60秒，为了避免数据库连接也被hold住60秒，这里手动关闭
      * Manually close the entity manager.
      * Since for async request, Spring won't do so until the request is finished,
      * which is unacceptable since we are doing long polling - means the db connection would be hold
@@ -151,16 +155,18 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
      */
     entityManagerUtil.closeEntityManager();
 
+    //核心，这里会根据客户端传来的ApolloConfigNotification,然后和客户端比较，如果有更新的，则一次性直接返回最新的配置
     List<ApolloConfigNotification> newNotifications =
         getApolloConfigNotifications(namespaces, clientSideNotifications, watchedKeysMap,
             latestReleaseMessages);
-
+    //如果配置有改变，则立即返回result给客户端
     if (!CollectionUtils.isEmpty(newNotifications)) {
       deferredResultWrapper.setResult(newNotifications);
     } else {
+      //注册DeferredResult的超时事件，trace一下，没有实际逻辑
       deferredResultWrapper
           .onTimeout(() -> logWatchedKeys(watchedKeys, "Apollo.LongPoll.TimeOutKeys"));
-
+      //注册DeferredResult的完成事件，完成移除对应的watchkey
       deferredResultWrapper.onCompletion(() -> {
         //unregister all keys
         for (String key : watchedKeys) {
@@ -168,7 +174,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
         }
         logWatchedKeys(watchedKeys, "Apollo.LongPoll.CompletedKeys");
       });
-
+      //将这次的watchKey加入到负责监听的map集合里，由ReleaseMessageScanner负责监听和通知
       //register all keys
       for (String key : watchedKeys) {
         this.deferredResults.put(key, deferredResultWrapper);
@@ -243,6 +249,13 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     return newNotifications;
   }
 
+
+  /**
+   * 处理ReleaseMessageScanner扫描后的最新的releaseMessage消息通知
+   * 一次请求hold住后，只能处理一个ReleaseMessage
+   * @param channel 这里的channel暂时没什么用，只有一个值:Topics.APOLLO_RELEASE_TOPIC
+   * @author youzhihao
+   */
   @Override
   public void handleMessage(ReleaseMessage message, String channel) {
     logger.info("message received - channel: {}, message: {}", channel, message);
@@ -252,7 +265,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     if (!Topics.APOLLO_RELEASE_TOPIC.equals(channel) || Strings.isNullOrEmpty(content)) {
       return;
     }
-
+    //appId+cluster+namespace
     String changedNamespace = retrieveNamespaceFromReleaseMessage.apply(content);
 
     if (Strings.isNullOrEmpty(changedNamespace)) {
@@ -265,11 +278,12 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     }
 
     //create a new list to avoid ConcurrentModificationException
+    //获取所有watchkey下的deferredResult
     List<DeferredResultWrapper> results = Lists.newArrayList(deferredResults.get(content));
 
     ApolloConfigNotification configNotification = new ApolloConfigNotification(changedNamespace, message.getId());
     configNotification.addMessage(content, message.getId());
-
+    //通知客户端
     //do async notification if too many clients
     if (results.size() > bizConfig.releaseMessageNotificationBatch()) {
       largeNotificationBatchExecutorService.submit(() -> {
@@ -297,7 +311,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     }
     logger.debug("Notification completed");
   }
-
+  //这里是将ReleaseMessage.message分离，取出namespace(releaseMessage=appId+cluster+namespace)
   private static final Function<String, String> retrieveNamespaceFromReleaseMessage =
       releaseMessage -> {
         if (Strings.isNullOrEmpty(releaseMessage)) {

@@ -59,6 +59,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
   //apollo内部的配置映射实体
   private volatile AtomicReference<ApolloConfig> m_configCache;
   private final String m_namespace;
+  //用来做长轮询接收到配置变更处理的线程
   private final static ScheduledExecutorService m_executorService;
   private final AtomicReference<ServiceDTO> m_longPollServiceDto;
   private final AtomicReference<ApolloNotificationMessages> m_remoteMessages;
@@ -317,12 +318,14 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
     remoteConfigLongPollService.submit(m_namespace, this);
   }
 
+  //长轮询接收到配置变更
   public void onLongPollNotified(ServiceDTO longPollNotifiedServiceDto, ApolloNotificationMessages remoteMessages) {
     m_longPollServiceDto.set(longPollNotifiedServiceDto);
     m_remoteMessages.set(remoteMessages);
     m_executorService.submit(new Runnable() {
       @Override
       public void run() {
+        //重新拉去所有配置
         m_configNeedForceRefresh.set(true);
         trySync();
       }
