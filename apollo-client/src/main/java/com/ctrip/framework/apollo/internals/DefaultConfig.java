@@ -29,6 +29,7 @@ import com.google.common.util.concurrent.RateLimiter;
  * @author Jason Song(song_s@ctrip.com)
  */
 public class DefaultConfig extends AbstractConfig implements RepositoryChangeListener {
+
   private static final Logger logger = LoggerFactory.getLogger(DefaultConfig.class);
   private final String m_namespace;
   //保存classpath下对应的namespace配置文件
@@ -42,7 +43,7 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
   /**
    * Constructor.
    *
-   * @param namespace        the namespace of this config instance
+   * @param namespace the namespace of this config instance
    * @param configRepository the config repository for this config instance
    */
   public DefaultConfig(String namespace, ConfigRepository configRepository) {
@@ -64,19 +65,17 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
     } finally {
       //register the change listener no matter config repository is working or not
       //so that whenever config repository is recovered, config could get changed
+      //注册ConfigRepository的监听器,
+      //每个DefaultConfig只有一个RepositoryChangeListener监听器
+      //每个DefaultConfig有n个ConfigChangeListener
       m_configRepository.addChangeListener(this);
     }
   }
 
   /**
-   * 核心方法，真正定义了读取属性的顺序
-   * step1: System.getProperty(key)
-   * step2: 根据key 去apollo查询配置
-            a.服务端有，则拉去服务端配置
-            b.服务端没有，则读取apollo本地缓存的配置，默认路径:/opt/data/{appId}/config-cache
-   * step3: System.getenv(key)
-   * step4: 查询当前classloader下以namespaceName.properties命名的文件
-   * step5: 如果都没有,使用默认值
+   * 核心方法，真正定义了读取属性的顺序 step1: System.getProperty(key) step2: 根据key 去apollo查询配置 a.服务端有，则拉去服务端配置 b.服务端没有，则读取apollo本地缓存的配置，默认路径:/opt/data/{appId}/config-cache step3: System.getenv(key) step4:
+   * 查询当前classloader下以namespaceName.properties命名的文件 step5: 如果都没有,使用默认值
+   *
    * @author youzhihao
    */
   @Override
@@ -138,6 +137,12 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
     return h.keySet();
   }
 
+  /**
+   * 注册repository的监听器后的回调方法，用于DefaultConfig中的同步配置
+   *
+   * @param newProperties 这里包含所有的该namespace的配置
+   * @author youzhihao
+   */
   @Override
   public synchronized void onRepositoryChange(String namespace, Properties newProperties) {
     if (newProperties.equals(m_configProperties.get())) {
@@ -147,14 +152,14 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
     ConfigSourceType sourceType = m_configRepository.getSourceType();
     Properties newConfigProperties = new Properties();
     newConfigProperties.putAll(newProperties);
-
+    //更新default内部的缓存结构，然后构造出一个actualChanges对象
     Map<String, ConfigChange> actualChanges = updateAndCalcConfigChanges(newConfigProperties, sourceType);
 
     //check double checked result
     if (actualChanges.isEmpty()) {
       return;
     }
-
+    //回调所有注册了ConfigChangeListener的监听器
     this.fireConfigChange(new ConfigChangeEvent(m_namespace, actualChanges));
 
     Tracer.logEvent("Apollo.Client.ConfigChanges", m_namespace);
@@ -167,8 +172,8 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
 
   private Map<String, ConfigChange> updateAndCalcConfigChanges(Properties newConfigProperties,
       ConfigSourceType sourceType) {
-    List<ConfigChange> configChanges =
-        calcPropertyChanges(m_namespace, m_configProperties.get(), newConfigProperties);
+
+    List<ConfigChange> configChanges = calcPropertyChanges(m_namespace, m_configProperties.get(), newConfigProperties);
 
     ImmutableMap.Builder<String, ConfigChange> actualChanges =
         new ImmutableMap.Builder<>();
@@ -181,11 +186,15 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
     }
 
     //2. update m_configProperties
+    //更新缓存,m_configProperties&m_sourceType
     updateConfig(newConfigProperties, sourceType);
+    //清空缓存，每一个defaultConifg内部的值都会有一个缓存
     clearConfigCache();
 
     //3. use getProperty to update configChange's new value and calc the final changes
     for (ConfigChange change : configChanges) {
+      //这里有一个比较坑的地方，change计算最新值的时候会从getProperty方法中取获取，然后System.getProperty的优先级最高
+      //导致的结果:如果一个变量被system.setProperty()赋值，那么他将永久生效，无法通过apollo进行变更
       change.setNewValue(this.getProperty(change.getPropertyName(), change.getNewValue()));
       switch (change.getChangeType()) {
         case ADDED:

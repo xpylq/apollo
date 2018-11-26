@@ -148,9 +148,11 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
       ApolloConfig current = loadApolloConfig();
 
       //reference equals means HTTP 304
+      //如果非304，则同步最新配置
       if (previous != current) {
         logger.debug("Remote Config refreshed!");
         m_configCache.set(current);
+        //通知注册了该repository的监听器，进行配置同步
         this.fireRepositoryChange(m_namespace, this.getConfig());
       }
 
