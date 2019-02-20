@@ -176,6 +176,10 @@ public class NamespaceController {
     return BeanUtils.transfrom(AppNamespaceDTO.class, appNamespace);
   }
 
+  /**
+   * 创建appNamespace
+   * @author youzhihao
+   */
   @PreAuthorize(value = "@permissionValidator.hasCreateAppNamespacePermission(#appId, #appNamespace)")
   @RequestMapping(value = "/apps/{appId}/appnamespaces", method = RequestMethod.POST)
   public AppNamespace createAppNamespace(@PathVariable String appId,
@@ -188,13 +192,13 @@ public class NamespaceController {
           InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + " & "
               + InputValidator.INVALID_NAMESPACE_NAMESPACE_MESSAGE));
     }
-
+    //本地创建AppNamespace记录
     AppNamespace createdAppNamespace = appNamespaceService.createAppNamespaceInLocal(appNamespace, appendNamespacePrefix);
 
     if (portalConfig.canAppAdminCreatePrivateNamespace() || createdAppNamespace.isPublic()) {
       assignNamespaceRoleToOperator(appId, appNamespace.getName());
     }
-
+    //发布广播，通知所有激活的环境下的configserver，创建对应的AppNamespace记录
     publisher.publishEvent(new AppNamespaceCreationEvent(createdAppNamespace));
 
     return createdAppNamespace;

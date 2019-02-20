@@ -24,10 +24,7 @@ public class PlaceholderHelper {
   private static final String EXPRESSION_SUFFIX = "}";
 
   /**
-   * Resolve placeholder property values, e.g.
-   * <br />
-   * <br />
-   * "${somePropertyValue}" -> "the actual property value"
+   * Resolve placeholder property values, e.g. <br /> <br /> "${somePropertyValue}" -> "the actual property value"
    */
   public Object resolvePropertyValue(ConfigurableBeanFactory beanFactory, String beanName, String placeholder) {
     // resolve string value
@@ -144,7 +141,7 @@ public class PlaceholderHelper {
     int index = startIndex + PLACEHOLDER_PREFIX.length();
     int withinNestedPlaceholder = 0;
     while (index < buf.length()) {
-      if (StringUtils.substringMatch(buf, index, PLACEHOLDER_SUFFIX)) {
+      if (StringUtils.substringMatch(buf, index, PLACEHOLDER_SUFFIX)) {//substringMatch为全匹配
         if (withinNestedPlaceholder > 0) {
           withinNestedPlaceholder--;
           index = index + PLACEHOLDER_SUFFIX.length();
@@ -159,5 +156,11 @@ public class PlaceholderHelper {
       }
     }
     return -1;
+  }
+
+  public static void main(String[] args) {
+    String test = "${name:youzhihao}";
+    int endIndex=new PlaceholderHelper().findPlaceholderEndIndex(test, 0);
+    System.out.println(endIndex);
   }
 }

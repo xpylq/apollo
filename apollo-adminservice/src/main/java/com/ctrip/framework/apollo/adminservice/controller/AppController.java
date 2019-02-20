@@ -31,6 +31,10 @@ public class AppController {
   @Autowired
   private AdminService adminService;
 
+  /**
+   * 创建App记录
+   * @author youzhihao
+   */
   @RequestMapping(path = "/apps", method = RequestMethod.POST)
   public AppDTO create(@RequestBody AppDTO dto) {
     if (!InputValidator.isValidClusterNamespace(dto.getAppId())) {

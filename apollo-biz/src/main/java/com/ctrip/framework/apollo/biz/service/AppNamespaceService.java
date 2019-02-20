@@ -107,9 +107,9 @@ public class AppNamespaceService {
     appNamespace.setId(0);//protection
     appNamespace.setDataChangeCreatedBy(createBy);
     appNamespace.setDataChangeLastModifiedBy(createBy);
-
+    //创建AppNamespace记录
     appNamespace = appNamespaceRepository.save(appNamespace);
-
+    //给该appId下所有cluster创建对应的Namespace记录
     instanceOfAppNamespaceInAllCluster(appNamespace.getAppId(), appNamespace.getName(), createBy);
 
     auditService.audit(AppNamespace.class.getSimpleName(), appNamespace.getId(), Audit.OP.INSERT, createBy);

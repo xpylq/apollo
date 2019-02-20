@@ -11,11 +11,16 @@ import org.springframework.core.PriorityOrdered;
 import org.springframework.util.ReflectionUtils;
 
 /**
+ * 本质是一个BeanPostProcessor
+ * spring内部调用顺序:
+ *  1. BeanPostProcessor.postProcessBeforeInitialization()
+ *  2. InitializingBean.afterPropertiesSet()
+ *  3. init-method()
+ *  2. BeanPostProcessor.postProcessAfterInitialization()
  * Create by zhangzheng on 2018/2/6
  */
 public abstract class ApolloProcessor implements BeanPostProcessor, PriorityOrdered {
 
-  //在bean实例化之前的钩子
   @Override
   public Object postProcessBeforeInitialization(Object bean, String beanName)
       throws BeansException {

@@ -16,6 +16,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+
+/**
+ * 广播事件监听器: 1. 监听App创建事件 2. 监听AppNamespace创建事件
+ *
+ * @author youzhihao
+ */
 @Component
 public class CreationListener {
 
@@ -28,12 +34,14 @@ public class CreationListener {
   @Autowired
   private AdminServiceAPI.NamespaceAPI namespaceAPI;
 
+
   @EventListener
   public void onAppCreationEvent(AppCreationEvent event) {
     AppDTO appDTO = BeanUtils.transfrom(AppDTO.class, event.getApp());
     List<Env> envs = portalSettings.getActiveEnvs();
     for (Env env : envs) {
       try {
+        //调用adminservice的AppController.create()方法
         appAPI.createApp(env, appDTO);
       } catch (Throwable e) {
         logger.error("Create app failed. appId = {}, env = {})", appDTO.getAppId(), env, e);
@@ -48,6 +56,7 @@ public class CreationListener {
     List<Env> envs = portalSettings.getActiveEnvs();
     for (Env env : envs) {
       try {
+        //调用adminservice的AppNamespaceController.create()方法
         namespaceAPI.createAppNamespace(env, appNamespace);
       } catch (Throwable e) {
         logger.error("Create appNamespace failed. appId = {}, env = {}", appNamespace.getAppId(), env, e);

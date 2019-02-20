@@ -14,7 +14,8 @@ import org.springframework.util.ReflectionUtils;
 
 /**
  * Apollo Annotation Processor for Spring Application
- * 在bean实例化后，初始化之前
+ *
+ *
  * 处理apollo的两个注解@ApolloConfig和@ApolloConfigChangeListener
  *
  * @author Jason Song(song_s@ctrip.com)
@@ -28,7 +29,7 @@ public class ApolloAnnotationProcessor extends ApolloProcessor {
     if (annotation == null) {
       return;
     }
-
+    //com.google.common.base的预检查工具类，有参考意义
     Preconditions.checkArgument(Config.class.isAssignableFrom(field.getType()),
         "Invalid type: %s for field: %s, should be Config", field.getType(), field);
 

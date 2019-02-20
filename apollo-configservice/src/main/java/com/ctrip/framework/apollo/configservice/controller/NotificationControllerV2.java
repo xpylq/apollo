@@ -155,7 +155,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
      */
     entityManagerUtil.closeEntityManager();
 
-    //核心，这里会根据客户端传来的ApolloConfigNotification,然后和客户端比较，如果有更新的，则一次性直接返回最新的配置
+    //核心，根据客户端拿客户端的notificationId和服务端的notificationId做比较，如果不一致，则立马返回，通知客户端获取最新的配置信息
     List<ApolloConfigNotification> newNotifications =
         getApolloConfigNotifications(namespaces, clientSideNotifications, watchedKeysMap,
             latestReleaseMessages);
