@@ -105,6 +105,17 @@ public class AdminServiceAPI {
           .post(env, "apps/{appId}/appnamespaces", appNamespace, AppNamespaceDTO.class, appNamespace.getAppId());
     }
 
+    public AppNamespaceDTO createMissingAppNamespace(Env env, AppNamespaceDTO appNamespace) {
+      return restTemplate
+          .post(env, "apps/{appId}/appnamespaces?silentCreation=true", appNamespace, AppNamespaceDTO.class,
+              appNamespace.getAppId());
+    }
+
+    public List<AppNamespaceDTO> getAppNamespaces(String appId, Env env) {
+      AppNamespaceDTO[] appNamespaceDTOs = restTemplate.get(env, "apps/{appId}/appnamespaces", AppNamespaceDTO[].class, appId);
+      return Arrays.asList(appNamespaceDTOs);
+    }
+
     public void deleteNamespace(Env env, String appId, String clusterName, String namespaceName, String operator) {
       restTemplate
           .delete(env, "apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}?operator={operator}", appId,
@@ -151,6 +162,10 @@ public class AdminServiceAPI {
     public ItemDTO loadItem(Env env, String appId, String clusterName, String namespaceName, String key) {
       return restTemplate.get(env, "apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/items/{key}",
           ItemDTO.class, appId, clusterName, namespaceName, key);
+    }
+
+    public ItemDTO loadItemById(Env env, long itemId) {
+      return restTemplate.get(env, "items/{itemId}", ItemDTO.class, itemId);
     }
 
     public void updateItemsByChangeSet(String appId, Env env, String clusterName, String namespace,
@@ -284,9 +299,7 @@ public class AdminServiceAPI {
       parameters.add("comment", releaseComment);
       parameters.add("operator", operator);
       parameters.add("isEmergencyPublish", String.valueOf(isEmergencyPublish));
-      grayDelKeys.forEach(key ->{
-        parameters.add("grayDelKeys",key);
-      });
+      grayDelKeys.forEach(key -> parameters.add("grayDelKeys",key));
       HttpEntity<MultiValueMap<String, String>> entity =
               new HttpEntity<>(parameters, headers);
       ReleaseDTO response = restTemplate.post(
