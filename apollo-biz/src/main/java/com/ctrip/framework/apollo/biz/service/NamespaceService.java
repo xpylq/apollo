@@ -179,11 +179,12 @@ public class NamespaceService {
   }
 
   public Namespace findChildNamespace(String appId, String parentClusterName, String namespaceName) {
+    //找到所有还存在的灰度发布namespace
     List<Namespace> namespaces = findByAppIdAndNamespaceName(appId, namespaceName);
     if (CollectionUtils.isEmpty(namespaces) || namespaces.size() == 1) {
       return null;
     }
-
+    //找到所有还存在的灰度发布cluster
     List<Cluster> childClusters = clusterService.findChildClusters(appId, parentClusterName);
     if (CollectionUtils.isEmpty(childClusters)) {
       return null;
@@ -192,7 +193,7 @@ public class NamespaceService {
     Set<String> childClusterNames = childClusters.stream().map(Cluster::getName).collect(Collectors.toSet());
     //the child namespace is the intersection of the child clusters and child namespaces
     for (Namespace namespace : namespaces) {
-      if (childClusterNames.contains(namespace.getClusterName())) {
+      if (childClusterNames.contains(namespace.getClusterName())) {//返回匹配的第一个
         return namespace;
       }
     }

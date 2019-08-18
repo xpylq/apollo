@@ -62,6 +62,10 @@ public class NamespaceBranchController {
     return namespaceBranchService.createBranch(appId, Env.valueOf(env), clusterName, namespaceName);
   }
 
+  /**
+   * 放弃灰度发布
+   * @author youzhihao
+   */
   @RequestMapping(value = "/apps/{appId}/envs/{env}/clusters/{clusterName}/namespaces/{namespaceName}/branches/{branchName}", method = RequestMethod.DELETE)
   public void deleteBranch(@PathVariable String appId,
                            @PathVariable String env,
@@ -69,6 +73,7 @@ public class NamespaceBranchController {
                            @PathVariable String namespaceName,
                            @PathVariable String branchName) {
 
+    //check
     boolean canDelete = permissionValidator.hasReleaseNamespacePermission(appId, namespaceName, env) ||
             (permissionValidator.hasModifyNamespacePermission(appId, namespaceName, env) &&
                       releaseService.loadLatestRelease(appId, Env.valueOf(env), branchName, namespaceName) == null);
@@ -80,13 +85,16 @@ public class NamespaceBranchController {
                                       + "or 2. you don't have modification permission "
                                       + "or 3. you have modification permission but branch has been released");
     }
-
+    //删除灰度对应的cluster和namespace
     namespaceBranchService.deleteBranch(appId, Env.valueOf(env), clusterName, namespaceName, branchName);
 
   }
 
 
-
+  /**
+   * 全量发布入口
+   * @author youzhihao
+   */
   @PreAuthorize(value = "@permissionValidator.hasReleaseNamespacePermission(#appId, #namespaceName, #env)")
   @RequestMapping(value = "/apps/{appId}/envs/{env}/clusters/{clusterName}/namespaces/{namespaceName}/branches/{branchName}/merge", method = RequestMethod.POST)
   public ReleaseDTO merge(@PathVariable String appId, @PathVariable String env,

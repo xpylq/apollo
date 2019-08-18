@@ -105,9 +105,9 @@ public class NamespaceBranchService {
   public ReleaseDTO merge(String appId, Env env, String clusterName, String namespaceName,
                           String branchName, String title, String comment,
                           boolean isEmergencyPublish, boolean deleteBranch, String operator) {
-
+    //1.查找master的所有item和灰度分支的所有item    2.合并两者，得到ItemChangeSets
     ItemChangeSets changeSets = calculateBranchChangeSet(appId, env, clusterName, namespaceName, branchName, operator);
-
+    //合并
     ReleaseDTO mergedResult =
             releaseService.updateAndPublish(appId, env, clusterName, namespaceName, title, comment,
                     branchName, isEmergencyPublish, deleteBranch, changeSets);
@@ -125,13 +125,13 @@ public class NamespaceBranchService {
     if (parentNamespace == null) {
       throw new BadRequestException("base namespace not existed");
     }
-
+    //如果当前parentNamespace有修改，则不能全量发布
     if (parentNamespace.getItemModifiedCnt() > 0) {
       throw new BadRequestException("Merge operation failed. Because master has modified items");
     }
-
+    //查询master的item
     List<ItemDTO> masterItems = itemService.findItems(appId, env, clusterName, namespaceName);
-
+    //查询灰度的master
     List<ItemDTO> branchItems = itemService.findItems(appId, env, branchName, namespaceName);
 
     ItemChangeSets changeSets = itemsComparator.compareIgnoreBlankAndCommentItem(parentNamespace.getBaseInfo().getId(),

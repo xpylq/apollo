@@ -26,15 +26,15 @@ public class ItemsComparator {
 
     ItemChangeSets changeSets = new ItemChangeSets();
 
-    for (ItemDTO item: targetItems){
+    for (ItemDTO item: targetItems){//遍历灰度的item集合
       String key = item.getKey();
 
       ItemDTO sourceItem = sourceItemMap.get(key);
-      if (sourceItem == null){//add
+      if (sourceItem == null){//add master没有增标记未新增
         ItemDTO copiedItem = copyItem(item);
         copiedItem.setNamespaceId(baseNamespaceId);
         changeSets.addCreateItem(copiedItem);
-      }else if (!Objects.equals(sourceItem.getValue(), item.getValue())){//update
+      }else if (!Objects.equals(sourceItem.getValue(), item.getValue())){//update master有但是值不一致，则标记未更新
         //only value & comment can be update
         sourceItem.setValue(item.getValue());
         sourceItem.setComment(item.getComment());
@@ -46,7 +46,7 @@ public class ItemsComparator {
       String key = item.getKey();
 
       ItemDTO targetItem = targetItemMap.get(key);
-      if(targetItem == null){//delete
+      if(targetItem == null){//delete //如果master有但是灰度分支没有，则标记未delete
         changeSets.addDeleteItem(item);
       }
     }

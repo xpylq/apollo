@@ -94,6 +94,10 @@ public class ReleaseController {
     return BeanUtils.transfrom(ReleaseDTO.class, release);
   }
 
+  /**
+   * 普通发布or灰度发布
+   * @author youzhihao
+   */
   @Transactional
   @RequestMapping(path = "/apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/releases", method = RequestMethod.POST)
   public ReleaseDTO publish(@PathVariable("appId") String appId,
@@ -108,6 +112,7 @@ public class ReleaseController {
       throw new NotFoundException(String.format("Could not find namespace for %s %s %s", appId,
                                                 clusterName, namespaceName));
     }
+    //创建发布记录
     Release release = releaseService.publish(namespace, releaseName, releaseComment, operator, isEmergencyPublish);
 
     //send release message
@@ -126,7 +131,7 @@ public class ReleaseController {
 
   /**
    * merge branch items to master and publish master
-   *
+   * 全量发布
    * @return published result
    */
   @Transactional
@@ -145,11 +150,11 @@ public class ReleaseController {
       throw new NotFoundException(String.format("Could not find namespace for %s %s %s", appId,
                                                 clusterName, namespaceName));
     }
-
+    //1.更新master的item     2.创建新的Release
     Release release = releaseService.mergeBranchChangeSetsAndRelease(namespace, branchName, releaseName,
                                                                      releaseComment, isEmergencyPublish, changeSets);
 
-    if (deleteBranch) {
+    if (deleteBranch) {//删除灰度分支
       namespaceBranchService.deleteBranch(appId, clusterName, namespaceName, branchName,
                                           NamespaceBranchStatus.MERGED, changeSets.getDataChangeLastModifiedBy());
     }

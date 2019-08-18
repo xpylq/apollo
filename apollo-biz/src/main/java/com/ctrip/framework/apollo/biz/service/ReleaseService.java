@@ -125,7 +125,7 @@ public class ReleaseService {
                                                  ItemChangeSets changeSets) {
 
     checkLock(namespace, isEmergencyPublish, changeSets.getDataChangeLastModifiedBy());
-
+    //合并灰度的item到master的item上
     itemSetService.updateSet(namespace, changeSets);
 
     Release branchRelease = findLatestActiveRelease(namespace.getAppId(), branchName, namespace
@@ -138,7 +138,7 @@ public class ReleaseService {
     operationContext.put(ReleaseOperationContext.SOURCE_BRANCH, branchName);
     operationContext.put(ReleaseOperationContext.BASE_RELEASE_ID, branchReleaseId);
     operationContext.put(ReleaseOperationContext.IS_EMERGENCY_PUBLISH, isEmergencyPublish);
-
+    //创建新的Release
     return masterRelease(namespace, releaseName, releaseComment, operateNamespaceItems,
                          changeSets.getDataChangeLastModifiedBy(),
                          ReleaseOperation.GRAY_RELEASE_MERGE_TO_MASTER, operationContext);
@@ -151,18 +151,20 @@ public class ReleaseService {
 
     //youzhihao:查看下namepspace锁住了没
     checkLock(namespace, isEmergencyPublish, operator);
-
+    //获取namespace的配置项
     Map<String, String> operateNamespaceItems = getNamespaceItems(namespace);
 
+    //如果是灰度发布，必然有父cluster
     Namespace parentNamespace = namespaceService.findParentNamespace(namespace);
 
-    //youzhihao:todo，这边是灰度发布吗？
     //branch release
+    //灰度发布
     if (parentNamespace != null) {
       return publishBranchNamespace(parentNamespace, namespace, operateNamespaceItems,
                                     releaseName, releaseComment, operator, isEmergencyPublish);
     }
-
+    //如果是正常发布
+    //查询对应还没有激活的灰度发布计划
     Namespace childNamespace = namespaceService.findChildNamespace(namespace);
 
     Release previousRelease = null;
@@ -174,11 +176,12 @@ public class ReleaseService {
     Map<String, Object> operationContext = Maps.newHashMap();
     operationContext.put(ReleaseOperationContext.IS_EMERGENCY_PUBLISH, isEmergencyPublish);
 
-
+    //正常发布的时候childNamespace=null
     Release release = masterRelease(namespace, releaseName, releaseComment, operateNamespaceItems,
                                     operator, ReleaseOperation.NORMAL_RELEASE, operationContext);
 
     //merge to branch and auto release
+    //处理当前正常发布的时候还有没有激活的灰度发布,todo:后面有时间再看这个逻辑
     if (childNamespace != null) {
       mergeFromMasterAndPublishBranch(namespace, childNamespace, operateNamespaceItems,
                                       releaseName, releaseComment, operator, previousRelease,
@@ -188,16 +191,20 @@ public class ReleaseService {
     return release;
   }
 
+  //灰度发布
   private Release publishBranchNamespace(Namespace parentNamespace, Namespace childNamespace,
                                          Map<String, String> childNamespaceItems,
                                          String releaseName, String releaseComment,
                                          String operator, boolean isEmergencyPublish, Set<String> grayDelKeys) {
+
+    //找到最近一次release的发布记录
     Release parentLatestRelease = findLatestActiveRelease(parentNamespace);
     Map<String, String> parentConfigurations = parentLatestRelease != null ?
             gson.fromJson(parentLatestRelease.getConfigurations(),
                     GsonType.CONFIG) : new HashMap<>();
     long baseReleaseId = parentLatestRelease == null ? 0 : parentLatestRelease.getId();
 
+    //将最近一次release的配置和灰度的发布配置进行合并，灰度发布配置优先级更高
     Map<String, String> configsToPublish = mergeConfiguration(parentConfigurations, childNamespaceItems);
 
     if(!(grayDelKeys == null || grayDelKeys.size()==0)){
@@ -264,6 +271,7 @@ public class ReleaseService {
 
   }
 
+
   private Release publishBranchNamespace(Namespace parentNamespace, Namespace childNamespace,
                                          Map<String, String> childNamespaceItems,
                                          String releaseName, String releaseComment,
@@ -306,6 +314,7 @@ public class ReleaseService {
         createRelease(childNamespace, releaseName, releaseComment, configurations, operator);
 
     //update gray release rules
+    //更新灰度规则中的releaseId，并将灰度分支状态BranchStatus置为"正在使用"
     GrayReleaseRule grayReleaseRule = namespaceBranchService.updateRulesReleaseId(childNamespace.getAppId(),
                                                                                   parentNamespace.getClusterName(),
                                                                                   childNamespace.getNamespaceName(),
@@ -317,6 +326,7 @@ public class ReleaseService {
           .batchTransformFromJSON(grayReleaseRule.getRules()));
     }
 
+    //创建灰度历史记录
     releaseHistoryService.createReleaseHistory(parentNamespace.getAppId(), parentNamespace.getClusterName(),
                                                parentNamespace.getNamespaceName(), childNamespace.getClusterName(),
                                                release.getId(),

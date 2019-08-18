@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 灰度相关操作
+ * @author youzhihao
+ */
 @RestController
 public class NamespaceBranchController {
 
@@ -89,6 +93,10 @@ public class NamespaceBranchController {
                               Topics.APOLLO_RELEASE_TOPIC);
   }
 
+  /**
+   * 删除灰度发布
+   * @author youzhihao
+   */
   @Transactional
   @RequestMapping(value = "/apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/branches/{branchName}", method = RequestMethod.DELETE)
   public void deleteBranch(@PathVariable String appId, @PathVariable String clusterName,

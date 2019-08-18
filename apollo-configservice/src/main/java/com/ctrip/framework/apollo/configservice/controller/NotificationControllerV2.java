@@ -123,7 +123,8 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     Map<String, Long> clientSideNotifications = Maps.newHashMap();
     //Map<namespace,ApolloConfigNotification>,做一些空namespace和大小写兼容性的过滤，筛选出符合规则的配置消息对象
     Map<String, ApolloConfigNotification> filteredNotifications = filterNotifications(appId, notifications);
-    //
+    //1.填充clientSideNotifications,ApolloConfigNotification,
+    //2.添加namespace的映射信息到deferredResultWrapper中
     for (Map.Entry<String, ApolloConfigNotification> notificationEntry : filteredNotifications.entrySet()) {
       String normalizedNamespace = notificationEntry.getKey();
       ApolloConfigNotification notification = notificationEntry.getValue();
@@ -137,7 +138,10 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     if (CollectionUtils.isEmpty(namespaces)) {
       throw new BadRequestException("Invalid format of notifications: " + notificationsAsString);
     }
-    //<namespace,List<String>>，其中list中的String为:"${appId},${cluster},${namespace}"结构的字符串
+    //<namespace,List<String>>，
+    //其中list中的String为:
+    //1. ${appId},${cluster},${namespace}
+    //2. ${appId},${datacenter},${namespace}
     Multimap<String, String> watchedKeysMap =
         watchKeysUtil.assembleAllWatchKeys(appId, cluster, namespaces, dataCenter);
 
