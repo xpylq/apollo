@@ -2,7 +2,6 @@ package com.ctrip.framework.apollo;
 
 import com.ctrip.framework.apollo.enums.ConfigSourceType;
 import com.google.common.base.Function;
-
 import java.util.Date;
 import java.util.Locale;
 import java.util.Set;

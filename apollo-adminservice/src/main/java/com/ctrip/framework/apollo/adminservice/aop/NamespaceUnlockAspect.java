@@ -17,12 +17,11 @@ import com.ctrip.framework.apollo.core.utils.StringUtils;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import java.util.List;
+import java.util.Map;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Map;
 
 
 /**

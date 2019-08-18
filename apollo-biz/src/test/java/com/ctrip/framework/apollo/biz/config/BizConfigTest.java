@@ -1,5 +1,8 @@
 package com.ctrip.framework.apollo.biz.config;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+
 import com.ctrip.framework.apollo.biz.service.BizDBPropertySource;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,9 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Jason Song(song_s@ctrip.com)

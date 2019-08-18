@@ -1,5 +1,11 @@
 package com.ctrip.framework.apollo.common.controller;
 
+import static org.slf4j.event.Level.ERROR;
+import static org.slf4j.event.Level.WARN;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+
 import com.ctrip.framework.apollo.common.exception.AbstractApolloHttpException;
 import com.ctrip.framework.apollo.common.exception.BadRequestException;
 import com.ctrip.framework.apollo.tracer.Tracer;
@@ -29,11 +35,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpStatusCodeException;
-import static org.slf4j.event.Level.ERROR;
-import static org.slf4j.event.Level.WARN;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @ControllerAdvice
 public class GlobalDefaultExceptionHandler {

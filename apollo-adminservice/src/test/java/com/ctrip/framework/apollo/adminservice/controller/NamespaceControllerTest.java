@@ -1,11 +1,12 @@
 package com.ctrip.framework.apollo.adminservice.controller;
 
+import static org.hamcrest.Matchers.containsString;
+
 import com.ctrip.framework.apollo.common.dto.NamespaceDTO;
 import com.ctrip.framework.apollo.common.utils.InputValidator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.web.client.HttpClientErrorException;
-import static org.hamcrest.Matchers.containsString;
 
 /**
  * Created by kezhenxu at 2019/1/8 16:27.

@@ -1,7 +1,6 @@
 package com.ctrip.framework.apollo.common.utils;
 
 import com.ctrip.framework.apollo.core.utils.StringUtils;
-
 import java.util.regex.Pattern;
 
 /**
