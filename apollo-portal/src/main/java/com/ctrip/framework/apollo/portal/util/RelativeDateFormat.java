@@ -1,9 +1,8 @@
 package com.ctrip.framework.apollo.portal.util;
 
-import org.apache.commons.lang.time.FastDateFormat;
-
 import java.util.Calendar;
 import java.util.Date;
+import org.apache.commons.lang.time.FastDateFormat;
 
 
 public class RelativeDateFormat {

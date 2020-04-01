@@ -2,12 +2,11 @@ package com.ctrip.framework.apollo.portal.environment;
 
 import com.ctrip.framework.apollo.core.utils.StringUtils;
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author wxq

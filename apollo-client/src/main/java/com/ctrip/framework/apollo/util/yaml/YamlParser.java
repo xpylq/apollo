@@ -1,6 +1,7 @@
 package com.ctrip.framework.apollo.util.yaml;
 
 import com.ctrip.framework.apollo.build.ApolloInjector;
+import com.ctrip.framework.apollo.core.utils.StringUtils;
 import com.ctrip.framework.apollo.util.factory.PropertiesFactory;
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -9,15 +10,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.MappingNode;
 import org.yaml.snakeyaml.parser.ParserException;
-
-import com.ctrip.framework.apollo.core.utils.StringUtils;
 
 /**
  * Transplanted from org.springframework.beans.factory.config.YamlProcessor since apollo can't depend on Spring directly

@@ -4,8 +4,8 @@ import com.ctrip.framework.apollo.openapi.service.ConsumerRolePermissionService;
 import com.ctrip.framework.apollo.openapi.util.ConsumerAuthUtil;
 import com.ctrip.framework.apollo.portal.constant.PermissionType;
 import com.ctrip.framework.apollo.portal.util.RoleUtils;
-import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Component;
 
 @Component
 public class ConsumerPermissionValidator {

@@ -1,16 +1,15 @@
 package com.ctrip.framework.foundation.internals.provider;
 
+import com.ctrip.framework.foundation.internals.Utils;
+import com.ctrip.framework.foundation.internals.io.BOMInputStream;
+import com.ctrip.framework.foundation.spi.provider.Provider;
+import com.ctrip.framework.foundation.spi.provider.ServerProvider;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
-
-import com.ctrip.framework.foundation.internals.Utils;
-import com.ctrip.framework.foundation.internals.io.BOMInputStream;
-import com.ctrip.framework.foundation.spi.provider.Provider;
-import com.ctrip.framework.foundation.spi.provider.ServerProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

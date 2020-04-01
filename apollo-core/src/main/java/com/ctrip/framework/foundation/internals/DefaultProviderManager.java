@@ -1,13 +1,12 @@
 package com.ctrip.framework.foundation.internals;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.ctrip.framework.foundation.internals.provider.DefaultApplicationProvider;
 import com.ctrip.framework.foundation.internals.provider.DefaultNetworkProvider;
 import com.ctrip.framework.foundation.internals.provider.DefaultServerProvider;
 import com.ctrip.framework.foundation.spi.ProviderManager;
 import com.ctrip.framework.foundation.spi.provider.Provider;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

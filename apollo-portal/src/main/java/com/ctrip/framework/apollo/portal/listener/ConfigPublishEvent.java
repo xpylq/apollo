@@ -1,7 +1,6 @@
 package com.ctrip.framework.apollo.portal.listener;
 
 import com.ctrip.framework.apollo.portal.environment.Env;
-
 import org.springframework.context.ApplicationEvent;
 
 public class ConfigPublishEvent extends ApplicationEvent {

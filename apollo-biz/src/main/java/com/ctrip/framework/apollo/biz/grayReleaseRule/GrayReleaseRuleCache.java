@@ -1,7 +1,6 @@
 package com.ctrip.framework.apollo.biz.grayReleaseRule;
 
 import com.ctrip.framework.apollo.common.dto.GrayReleaseRuleItemDTO;
-
 import java.util.Set;
 
 /**

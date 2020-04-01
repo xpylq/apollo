@@ -2,7 +2,6 @@ package com.ctrip.framework.apollo.portal.entity.vo;
 
 import com.ctrip.framework.apollo.common.dto.ClusterDTO;
 import com.ctrip.framework.apollo.portal.environment.Env;
-
 import java.util.List;
 
 public class EnvClusterInfo {
