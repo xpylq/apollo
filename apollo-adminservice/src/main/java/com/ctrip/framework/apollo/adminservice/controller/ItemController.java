@@ -12,7 +12,11 @@ import com.ctrip.framework.apollo.common.dto.ItemDTO;
 import com.ctrip.framework.apollo.common.exception.BadRequestException;
 import com.ctrip.framework.apollo.common.exception.NotFoundException;
 import com.ctrip.framework.apollo.common.utils.BeanUtils;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,10 +50,9 @@ public class ItemController {
     Item managedEntity = itemService.findOne(appId, clusterName, namespaceName, entity.getKey());
     if (managedEntity != null) {
       throw new BadRequestException("item already exists");
-    } else {
-      entity = itemService.save(entity);
-      builder.createItem(entity);
     }
+    entity = itemService.save(entity);
+    builder.createItem(entity);
     dto = BeanUtils.transform(ItemDTO.class, entity);
 
     Commit commit = new Commit();
@@ -132,6 +135,21 @@ public class ItemController {
                                  @PathVariable("clusterName") String clusterName,
                                  @PathVariable("namespaceName") String namespaceName) {
     return BeanUtils.batchTransform(ItemDTO.class, itemService.findItemsWithOrdered(appId, clusterName, namespaceName));
+  }
+
+  @GetMapping("/apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/items/deleted")
+  public List<ItemDTO> findDeletedItems(@PathVariable("appId") String appId,
+                                        @PathVariable("clusterName") String clusterName,
+                                        @PathVariable("namespaceName") String namespaceName) {
+    List<Commit> commits = commitService.find(appId, clusterName, namespaceName, null);
+    if (Objects.nonNull(commits)) {
+      List<Item> deletedItems = commits.stream()
+          .map(item -> ConfigChangeContentBuilder.convertJsonString(item.getChangeSets()).getDeleteItems())
+          .flatMap(Collection::stream)
+          .collect(Collectors.toList());
+      return BeanUtils.batchTransform(ItemDTO.class, deletedItems);
+    }
+    return Collections.emptyList();
   }
 
   @GetMapping("/items/{itemId}")

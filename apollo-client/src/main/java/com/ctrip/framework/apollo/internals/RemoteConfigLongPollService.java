@@ -1,5 +1,24 @@
 package com.ctrip.framework.apollo.internals;
 
+import com.ctrip.framework.apollo.build.ApolloInjector;
+import com.ctrip.framework.apollo.core.ConfigConsts;
+import com.ctrip.framework.apollo.core.dto.ApolloConfigNotification;
+import com.ctrip.framework.apollo.core.dto.ApolloNotificationMessages;
+import com.ctrip.framework.apollo.core.dto.ServiceDTO;
+import com.ctrip.framework.apollo.core.enums.ConfigFileFormat;
+import com.ctrip.framework.apollo.core.schedule.ExponentialSchedulePolicy;
+import com.ctrip.framework.apollo.core.schedule.SchedulePolicy;
+import com.ctrip.framework.apollo.core.signature.Signature;
+import com.ctrip.framework.apollo.core.utils.ApolloThreadFactory;
+import com.ctrip.framework.apollo.core.utils.StringUtils;
+import com.ctrip.framework.apollo.exceptions.ApolloConfigException;
+import com.ctrip.framework.apollo.tracer.Tracer;
+import com.ctrip.framework.apollo.tracer.spi.Transaction;
+import com.ctrip.framework.apollo.util.ConfigUtil;
+import com.ctrip.framework.apollo.util.ExceptionUtil;
+import com.ctrip.framework.apollo.util.http.HttpRequest;
+import com.ctrip.framework.apollo.util.http.HttpResponse;
+import com.ctrip.framework.apollo.util.http.HttpUtil;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
@@ -12,28 +31,6 @@ import com.google.common.net.UrlEscapers;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.gson.Gson;
-
-import com.ctrip.framework.apollo.build.ApolloInjector;
-import com.ctrip.framework.apollo.core.ConfigConsts;
-import com.ctrip.framework.apollo.core.dto.ApolloConfigNotification;
-import com.ctrip.framework.apollo.core.dto.ApolloNotificationMessages;
-import com.ctrip.framework.apollo.core.dto.ServiceDTO;
-import com.ctrip.framework.apollo.core.enums.ConfigFileFormat;
-import com.ctrip.framework.apollo.core.schedule.ExponentialSchedulePolicy;
-import com.ctrip.framework.apollo.core.schedule.SchedulePolicy;
-import com.ctrip.framework.apollo.core.utils.ApolloThreadFactory;
-import com.ctrip.framework.apollo.exceptions.ApolloConfigException;
-import com.ctrip.framework.apollo.tracer.Tracer;
-import com.ctrip.framework.apollo.tracer.spi.Transaction;
-import com.ctrip.framework.apollo.util.ConfigUtil;
-import com.ctrip.framework.apollo.util.ExceptionUtil;
-import com.ctrip.framework.apollo.util.http.HttpRequest;
-import com.ctrip.framework.apollo.util.http.HttpResponse;
-import com.ctrip.framework.apollo.util.http.HttpUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -43,11 +40,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
- * 长轮询动态感知服务端最新配置
- * 默认客户端超时是90秒，服务端60秒内没有配置变更则断开，返回304
  */
 public class RemoteConfigLongPollService {
   private static final Logger logger = LoggerFactory.getLogger(RemoteConfigLongPollService.class);
@@ -62,12 +59,8 @@ public class RemoteConfigLongPollService {
   private SchedulePolicy m_longPollFailSchedulePolicyInSecond;
   private RateLimiter m_longPollRateLimiter;
   private final AtomicBoolean m_longPollStarted;
-  //存放需要长轮询的namespace,一个namespace对应一个RemoteConfigRepository
   private final Multimap<String, RemoteConfigRepository> m_longPollNamespaces;
-  //这里存放所有需要长轮询，感知服务端最新配置的namespace
-  //<namespace,notificationId>,notificationId是服务端ReleaseMessage表的Id，长轮询请求传给服务端，然后和最新的id做比较，来判断是否有最新配置变更
   private final ConcurrentMap<String, Long> m_notifications;
-  //<namespace,Map<watchedKey,notificationId>
   private final Map<String, ApolloNotificationMessages> m_remoteNotificationMessages;//namespaceName -> watchedKey -> notificationId
   private Type m_responseType;
   private Gson gson;
@@ -79,7 +72,6 @@ public class RemoteConfigLongPollService {
    * Constructor.
    */
   public RemoteConfigLongPollService() {
-    //fail-over策略，默认一秒重试，然后再次失败，重试时间间隔2的次方，最大为120秒后重试.
     m_longPollFailSchedulePolicyInSecond = new ExponentialSchedulePolicy(1, 120); //in second
     m_longPollingStopped = new AtomicBoolean(false);
     m_longPollingService = Executors.newSingleThreadExecutor(
@@ -100,9 +92,7 @@ public class RemoteConfigLongPollService {
 
   public boolean submit(String namespace, RemoteConfigRepository remoteConfigRepository) {
     boolean added = m_longPollNamespaces.put(namespace, remoteConfigRepository);
-    //将指定namespace加入长轮询列表
     m_notifications.putIfAbsent(namespace, INIT_NOTIFICATION_ID);
-    //如果没有启动长轮询，则启动长轮询
     if (!m_longPollStarted.get()) {
       startLongPolling();
     }
@@ -118,6 +108,7 @@ public class RemoteConfigLongPollService {
       final String appId = m_configUtil.getAppId();
       final String cluster = m_configUtil.getCluster();
       final String dataCenter = m_configUtil.getDataCenter();
+      final String secret = m_configUtil.getAccessKeySecret();
       final long longPollingInitialDelayInMills = m_configUtil.getLongPollingInitialDelayInMills();
       m_longPollingService.submit(new Runnable() {
         @Override
@@ -130,7 +121,7 @@ public class RemoteConfigLongPollService {
               //ignore
             }
           }
-          doLongPollingRefresh(appId, cluster, dataCenter);
+          doLongPollingRefresh(appId, cluster, dataCenter, secret);
         }
       });
     } catch (Throwable ex) {
@@ -146,8 +137,7 @@ public class RemoteConfigLongPollService {
     this.m_longPollingStopped.compareAndSet(false, true);
   }
 
-  //长轮询核心的方法
-  private void doLongPollingRefresh(String appId, String cluster, String dataCenter) {
+  private void doLongPollingRefresh(String appId, String cluster, String dataCenter, String secret) {
     final Random random = new Random();
     ServiceDTO lastServiceDto = null;
     while (!m_longPollingStopped.get() && !Thread.currentThread().isInterrupted()) {
@@ -162,18 +152,22 @@ public class RemoteConfigLongPollService {
       String url = null;
       try {
         if (lastServiceDto == null) {
-          //这里很重要，获取所有config地址，然后随机获取一个。是否轮询更好，轮询对fast-failover更加友好，因为configServer启动后，会从最大的messageRelease开始扫描，在启动之前发布的配置是感知不到的。
           List<ServiceDTO> configServices = getConfigServices();
           lastServiceDto = configServices.get(random.nextInt(configServices.size()));
         }
-        //拼接url:http://10.216.40.201:8080/notifications/v2?cluster=default&appId=apollo-demo&ip=10.242.34.76&notifications=%5B%7B%22namespaceName%22%3A%22application%22%2C%22notificationId%22%3A-1%7D%5D
-        //这里有注意，所有的namespace都是统一建立一个长轮询连接，然后在
-        url = assembleLongPollRefreshUrl(lastServiceDto.getHomepageUrl(), appId, cluster, dataCenter,
+
+        url =
+            assembleLongPollRefreshUrl(lastServiceDto.getHomepageUrl(), appId, cluster, dataCenter,
                 m_notifications);
 
         logger.debug("Long polling from {}", url);
+
         HttpRequest request = new HttpRequest(url);
         request.setReadTimeout(LONG_POLLING_READ_TIMEOUT);
+        if (!StringUtils.isBlank(secret)) {
+          Map<String, String> headers = Signature.buildHttpHeaders(url, appId, secret);
+          request.setHeaders(headers);
+        }
 
         transaction.addData("Url", url);
 
@@ -181,13 +175,9 @@ public class RemoteConfigLongPollService {
             m_httpUtil.doGet(request, m_responseType);
 
         logger.debug("Long polling response: {}, url: {}", response.getStatusCode(), url);
-        //statusCode=200，则表示配置有变更
         if (response.getStatusCode() == 200 && response.getBody() != null) {
-          //更新m_notifications
           updateNotifications(response.getBody());
-          //更新m_remoteNotificationMessages
           updateRemoteNotifications(response.getBody());
-          //通知namespace配置有变更
           transaction.addData("Result", response.getBody().toString());
           notify(lastServiceDto, response.getBody());
         }
@@ -243,7 +233,6 @@ public class RemoteConfigLongPollService {
     }
   }
 
-  //更新当前m_notifications的namespace的notificationId，实际就是服务端ReleaseMessage表的id
   private void updateNotifications(List<ApolloConfigNotification> deltaNotifications) {
     for (ApolloConfigNotification notification : deltaNotifications) {
       if (Strings.isNullOrEmpty(notification.getNamespaceName())) {

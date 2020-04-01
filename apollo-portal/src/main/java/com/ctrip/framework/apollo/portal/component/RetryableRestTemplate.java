@@ -1,9 +1,9 @@
 package com.ctrip.framework.apollo.portal.component;
 
 import com.ctrip.framework.apollo.common.exception.ServiceException;
-import com.ctrip.framework.apollo.core.MetaDomainConsts;
+import com.ctrip.framework.apollo.portal.environment.PortalMetaDomainService;
 import com.ctrip.framework.apollo.core.dto.ServiceDTO;
-import com.ctrip.framework.apollo.core.enums.Env;
+import com.ctrip.framework.apollo.portal.environment.Env;
 import com.ctrip.framework.apollo.portal.constant.TracerEventType;
 import com.ctrip.framework.apollo.tracer.Tracer;
 import com.ctrip.framework.apollo.tracer.spi.Transaction;
@@ -40,12 +40,16 @@ public class RetryableRestTemplate {
 
   private final RestTemplateFactory restTemplateFactory;
   private final AdminServiceAddressLocator adminServiceAddressLocator;
+  private final PortalMetaDomainService portalMetaDomainService;
 
   public RetryableRestTemplate(
       final @Lazy RestTemplateFactory restTemplateFactory,
-      final @Lazy AdminServiceAddressLocator adminServiceAddressLocator) {
+      final @Lazy AdminServiceAddressLocator adminServiceAddressLocator,
+      final PortalMetaDomainService portalMetaDomainService
+  ) {
     this.restTemplateFactory = restTemplateFactory;
     this.adminServiceAddressLocator = adminServiceAddressLocator;
+    this.portalMetaDomainService = portalMetaDomainService;
   }
 
 
@@ -117,7 +121,7 @@ public class RetryableRestTemplate {
     //all admin server down
     ServiceException e =
         new ServiceException(String.format("Admin servers are unresponsive. meta server address: %s, admin servers: %s",
-                                           MetaDomainConsts.getDomain(env), services));
+                portalMetaDomainService.getDomain(env), services));
     ct.setStatus(e);
     ct.complete();
     throw e;
@@ -161,7 +165,7 @@ public class RetryableRestTemplate {
     //all admin server down
     ServiceException e =
         new ServiceException(String.format("Admin servers are unresponsive. meta server address: %s, admin servers: %s",
-                                           MetaDomainConsts.getDomain(env), services));
+                portalMetaDomainService.getDomain(env), services));
     ct.setStatus(e);
     ct.complete();
     throw e;
@@ -176,7 +180,7 @@ public class RetryableRestTemplate {
       ServiceException e = new ServiceException(String.format("No available admin server."
                                                               + " Maybe because of meta server down or all admin server down. "
                                                               + "Meta server address: %s",
-                                                              MetaDomainConsts.getDomain(env)));
+              portalMetaDomainService.getDomain(env)));
       ct.setStatus(e);
       ct.complete();
       throw e;
@@ -220,10 +224,9 @@ public class RetryableRestTemplate {
       return nestedException instanceof SocketTimeoutException
              || nestedException instanceof HttpHostConnectException
              || nestedException instanceof ConnectTimeoutException;
-    } else {
-      return nestedException instanceof HttpHostConnectException
-             || nestedException instanceof ConnectTimeoutException;
     }
+    return nestedException instanceof HttpHostConnectException
+           || nestedException instanceof ConnectTimeoutException;
   }
 
 }

@@ -99,9 +99,8 @@ public class ItemService {
     Namespace namespace = namespaceService.findOne(appId, clusterName, namespaceName);
     if (namespace != null) {
       return findItemsWithoutOrdered(namespace.getId());
-    } else {
-      return Collections.emptyList();
     }
+    return Collections.emptyList();
   }
 
   public List<Item> findItemsWithOrdered(Long namespaceId) {
@@ -116,9 +115,8 @@ public class ItemService {
     Namespace namespace = namespaceService.findOne(appId, clusterName, namespaceName);
     if (namespace != null) {
       return findItemsWithOrdered(namespace.getId());
-    } else {
-      return Collections.emptyList();
     }
+    return Collections.emptyList();
   }
 
   public List<Item> findItemsModifiedAfterDate(long namespaceId, Date date) {

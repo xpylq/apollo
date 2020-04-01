@@ -64,7 +64,9 @@ public class BeanUtils {
     Set<String> emptyNames = new HashSet<>();
     for (PropertyDescriptor pd : pds) {
       Object srcValue = src.getPropertyValue(pd.getName());
-      if (srcValue == null) emptyNames.add(pd.getName());
+      if (srcValue == null) {
+          emptyNames.add(pd.getName());
+      }
     }
     String[] result = new String[emptyNames.size()];
     return emptyNames.toArray(result);
@@ -89,7 +91,9 @@ public class BeanUtils {
     try {
       Class<?> clazz = list.get(0).getClass();
       Field field = deepFindField(clazz, key);
-      if (field == null) throw new IllegalArgumentException("Could not find the key");
+      if (field == null) {
+          throw new IllegalArgumentException("Could not find the key");
+      }
       field.setAccessible(true);
       for (Object o : list) {
         map.put((K) field.get(o), (V) o);
@@ -117,7 +121,9 @@ public class BeanUtils {
     try {
       Class<?> clazz = list.get(0).getClass();
       Field field = deepFindField(clazz, key);
-      if (field == null) throw new IllegalArgumentException("Could not find the key");
+      if (field == null) {
+          throw new IllegalArgumentException("Could not find the key");
+      }
       field.setAccessible(true);
       for (Object o : list) {
         K k = (K) field.get(o);
@@ -147,7 +153,9 @@ public class BeanUtils {
     try {
       Class<?> clazz = list.get(0).getClass();
       Field field = deepFindField(clazz, key);
-      if (field == null) throw new IllegalArgumentException("Could not find the key");
+      if (field == null) {
+          throw new IllegalArgumentException("Could not find the key");
+      }
       field.setAccessible(true);
       for (Object o : list) {
         set.add((K)field.get(o));

@@ -88,7 +88,7 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
     if (m_fileProperties == null) {
       sync();
     }
-    Properties result = new Properties();
+    Properties result = propertiesFactory.getPropertiesInstance();
     result.putAll(m_fileProperties);
     return result;
   }
@@ -118,7 +118,7 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
     if (newProperties.equals(m_fileProperties)) {
       return;
     }
-    Properties newFileProperties = new Properties();
+    Properties newFileProperties = propertiesFactory.getPropertiesInstance();
     newFileProperties.putAll(newProperties);
     updateFileProperties(newFileProperties, m_upstream.getSourceType());
     this.fireRepositoryChange(namespace, newProperties);
@@ -198,8 +198,7 @@ public class LocalFileConfigRepository extends AbstractConfigRepository
 
       try {
         in = new FileInputStream(file);
-
-        properties = new Properties();
+        properties = propertiesFactory.getPropertiesInstance();
         properties.load(in);
         logger.debug("Loading local config file {} successfully!", file.getAbsolutePath());
       } catch (IOException ex) {

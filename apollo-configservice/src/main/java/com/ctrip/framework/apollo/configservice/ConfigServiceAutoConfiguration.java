@@ -6,10 +6,13 @@ import com.ctrip.framework.apollo.biz.message.ReleaseMessageScanner;
 import com.ctrip.framework.apollo.configservice.controller.ConfigFileController;
 import com.ctrip.framework.apollo.configservice.controller.NotificationController;
 import com.ctrip.framework.apollo.configservice.controller.NotificationControllerV2;
+import com.ctrip.framework.apollo.configservice.filter.ClientAuthenticationFilter;
 import com.ctrip.framework.apollo.configservice.service.ReleaseMessageServiceWithCache;
 import com.ctrip.framework.apollo.configservice.service.config.ConfigService;
 import com.ctrip.framework.apollo.configservice.service.config.ConfigServiceWithCache;
 import com.ctrip.framework.apollo.configservice.service.config.DefaultConfigService;
+import com.ctrip.framework.apollo.configservice.util.AccessKeyUtil;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
@@ -44,7 +47,18 @@ public class ConfigServiceAutoConfiguration {
     return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
   }
 
-  //将所有需要ReleaseMessage消息的类，加入监听模式，当ReleaseMessageScanner扫描到新的消息，则通知这些类
+  @Bean
+  public FilterRegistrationBean clientAuthenticationFilter(AccessKeyUtil accessKeyUtil) {
+    FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+
+    filterRegistrationBean.setFilter(new ClientAuthenticationFilter(accessKeyUtil));
+    filterRegistrationBean.addUrlPatterns("/configs/*");
+    filterRegistrationBean.addUrlPatterns("/configfiles/*");
+    filterRegistrationBean.addUrlPatterns("/notifications/v2/*");
+
+    return filterRegistrationBean;
+  }
+
   @Configuration
   static class MessageScannerConfiguration {
     private final NotificationController notificationController;
